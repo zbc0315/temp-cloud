@@ -1,5 +1,10 @@
 # Temp Cloud
 
+[![Publish Docker Image](https://github.com/zbc0315/temp-cloud/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/zbc0315/temp-cloud/actions/workflows/docker-publish.yml)
+[![Create GitHub Release](https://github.com/zbc0315/temp-cloud/actions/workflows/release.yml/badge.svg)](https://github.com/zbc0315/temp-cloud/actions/workflows/release.yml)
+[![Docker Image Version](https://img.shields.io/docker/v/zbc0315/temp-cloud?label=docker%20hub&sort=semver)](https://hub.docker.com/r/zbc0315/temp-cloud)
+[![Docker Pulls](https://img.shields.io/docker/pulls/zbc0315/temp-cloud)](https://hub.docker.com/r/zbc0315/temp-cloud)
+
 一个用于本地局域网的临时中转 Web 应用，支持：
 
 - 上传文件

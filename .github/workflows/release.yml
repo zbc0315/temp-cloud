@@ -5,9 +5,6 @@ on:
     tags:
       - "v*"
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -15,7 +12,40 @@ jobs:
       contents: write
 
     steps:
+      - name: Prepare release values
+        id: vars
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME}"
+          VERSION="${TAG_NAME#v}"
+          echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.vars.outputs.tag_name }}
+          name: Temp Cloud ${{ steps.vars.outputs.tag_name }}
           generate_release_notes: true
+          body: |
+            ## Docker Image
+
+            ```bash
+            docker pull zbc0315/temp-cloud:${{ steps.vars.outputs.version }}
+            ```
+
+            Or use the rolling tag:
+
+            ```bash
+            docker pull zbc0315/temp-cloud:latest
+            ```
+
+            ## Quick Start
+
+            ```bash
+            docker run -d \
+              --name temp-cloud \
+              -p 2012:3000 \
+              -v /path/to/temp-cloud-data:/app/data \
+              --restart unless-stopped \
+              zbc0315/temp-cloud:${{ steps.vars.outputs.version }}
+            ```
