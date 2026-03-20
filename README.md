@@ -7,17 +7,91 @@
 
 中文 | [English](#english)
 
-一个用于本地局域网的临时中转 Web 应用，支持：
+一个面向局域网场景的临时中转站，用来在不同设备之间快速传递文件、文本和图片。
 
-- 上传文件
-- 粘贴文本
-- 粘贴图片
-- 无密码共享
-- 使用临时密码访问
-- 自定义保存时长，默认 1 小时，最长 24 小时
+适合这些使用场景：
+
+- 电脑 1 上传一个文件，电脑 2 立即下载
+- 在手机上粘贴验证码、命令、链接，在电脑上直接复制
+- 把截图临时贴到网页里，再在另一台设备下载或复制
+- 使用无密码模式进行快速共享
+- 使用临时密码给特定内容加一道简单访问门槛
+
+## 功能特性
+
+- 文件、文本、图片三种内容类型
+- 支持拖拽、上传、文本粘贴、图片粘贴
+- 无密码共享和密码访问两种模式
+- 自定义保留时间，默认 1 小时，最长 24 小时
 - 过期自动清理
+- 下载文件、复制文本、复制图片
+- 简洁界面，支持中英文和亮色/暗色主题
+- 适合本地服务器、NAS、家庭实验室和办公室局域网
 
-## 本地启动
+## 使用方法
+
+### 1. 上传或粘贴内容
+
+打开网页后，在“上传与粘贴”页签中：
+
+- 选择内容类型：文件、文本或图片
+- 上传文件，或者直接粘贴文本/图片
+- 可选填写标题
+- 可选填写临时密码
+- 选择保存时间
+- 点击“保存”
+
+### 2. 在另一台设备获取内容
+
+打开同一个网页后，在“下载与复制”页签中：
+
+- 无密码内容会直接显示
+- 如果内容设置了密码，输入对应密码后会显示该密码下的内容
+- 文件可直接下载
+- 文本可一键复制
+- 图片可下载，也可在支持的浏览器中直接复制
+
+## 安装方法
+
+### 方式一：直接使用 Docker Hub 镜像
+
+镜像地址：
+
+```text
+docker.io/zbc0315/temp-cloud
+```
+
+直接运行：
+
+```bash
+docker run -d \
+  --name temp-cloud \
+  -p 2012:3000 \
+  -v /path/to/temp-cloud-data:/app/data \
+  --restart unless-stopped \
+  zbc0315/temp-cloud:latest
+```
+
+Docker Compose：
+
+```yaml
+services:
+  temp-cloud:
+    image: zbc0315/temp-cloud:latest
+    container_name: temp-cloud
+    restart: unless-stopped
+    ports:
+      - "2012:3000"
+    environment:
+      TZ: Asia/Shanghai
+      PORT: 3000
+    volumes:
+      - ./data:/app/data
+```
+
+这是最适合 NAS 用户的安装方式，不需要本地构建镜像。
+
+### 方式二：本地部署源码
 
 ```bash
 npm install
@@ -36,40 +110,81 @@ http://0.0.0.0:3000
 http://192.168.1.10:3000
 ```
 
-## 说明
-
-- 数据保存在 `data/items.json`
-- 上传文件保存在 `data/uploads/`
-- 过期内容会在启动时和运行过程中自动删除
-- 单文件上传限制为 100MB
-
-## Docker 部署
-
-已提供完整 Docker 部署方案：
+### 方式三：使用项目内置 Docker 部署脚本
 
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
 ```
 
-详细说明见 [DEPLOYMENT.md](/home/zbc/Projects/temp-cloud/DEPLOYMENT.md)。
+详细部署说明见 [DEPLOYMENT.md](/home/zbc/Projects/temp-cloud/DEPLOYMENT.md)。
 
-## Docker Hub
+## 数据与限制
 
-镜像地址：
+- 数据文件保存在 `data/items.json`
+- 上传文件保存在 `data/uploads/`
+- 过期内容会自动删除
+- 单文件上传限制为 100MB
+
+---
+
+## English
+
+Temp Cloud is a temporary LAN transfer hub for quickly moving files, text, and images between devices on the same network.
+
+Typical use cases:
+
+- Upload a file on computer A and download it from computer B
+- Paste a code, command, or link on one device and copy it on another
+- Paste a screenshot into the page and retrieve it from another device
+- Share content instantly in public mode
+- Protect temporary content with a simple password
+
+## Features
+
+- Three content types: file, text, and image
+- Supports drag and drop, upload, text paste, and image paste
+- Public mode and password-protected mode
+- Custom retention time, default 1 hour, maximum 24 hours
+- Automatic cleanup after expiration
+- File download, text copy, and image copy
+- Clean interface with bilingual UI and light/dark themes
+- Suitable for local servers, NAS devices, homelabs, and office LANs
+
+## How To Use
+
+### 1. Upload or paste content
+
+Open the web page and go to the `Upload & Paste` tab:
+
+- Choose the content type: file, text, or image
+- Upload a file, or paste text/image directly
+- Optionally add a title
+- Optionally add a temporary password
+- Select the retention time
+- Click `Save`
+
+### 2. Retrieve content on another device
+
+Open the same web page on another device and go to the `Download & Copy` tab:
+
+- Public content appears automatically
+- For protected content, enter the password to reveal matching items
+- Files can be downloaded
+- Text can be copied with one click
+- Images can be downloaded and, in supported browsers, copied directly
+
+## Installation
+
+### Option 1: Use the Docker Hub image
+
+Image:
 
 ```text
 docker.io/zbc0315/temp-cloud
 ```
 
-可用标签：
-
-```text
-latest
-1.0.0
-```
-
-### 直接运行
+Run directly:
 
 ```bash
 docker run -d \
@@ -80,7 +195,7 @@ docker run -d \
   zbc0315/temp-cloud:latest
 ```
 
-### Docker Compose
+Docker Compose:
 
 ```yaml
 services:
@@ -97,21 +212,9 @@ services:
       - ./data:/app/data
 ```
 
-适合 NAS 用户直接拉取运行，无需本地构建镜像。
+This is the best option for NAS users because it does not require local image builds.
 
-## English
-
-Temp Cloud is a temporary LAN transfer web app for:
-
-- File upload
-- Text clipboard sharing
-- Image clipboard sharing
-- Public sharing without password
-- Password-protected temporary access
-- Custom retention time, default 1 hour, maximum 24 hours
-- Automatic expiration cleanup
-
-## Local Run
+### Option 2: Run from source
 
 ```bash
 npm install
@@ -130,65 +233,18 @@ Other devices on the same LAN can access it through the server IP, for example:
 http://192.168.1.10:3000
 ```
 
-## Notes
-
-- Data is stored in `data/items.json`
-- Uploaded files are stored in `data/uploads/`
-- Expired content is deleted automatically on startup and during runtime
-- Maximum single file size is 100MB
-
-## Docker Deployment
-
-A complete Docker deployment setup is included:
+### Option 3: Use the built-in Docker deployment script
 
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
 ```
 
-See [DEPLOYMENT.md](/home/zbc/Projects/temp-cloud/DEPLOYMENT.md) for details.
+See [DEPLOYMENT.md](/home/zbc/Projects/temp-cloud/DEPLOYMENT.md) for full deployment details.
 
-## Docker Hub
+## Data And Limits
 
-Image:
-
-```text
-docker.io/zbc0315/temp-cloud
-```
-
-Available tags:
-
-```text
-latest
-1.0.0
-```
-
-### Run Directly
-
-```bash
-docker run -d \
-  --name temp-cloud \
-  -p 2012:3000 \
-  -v /path/to/temp-cloud-data:/app/data \
-  --restart unless-stopped \
-  zbc0315/temp-cloud:latest
-```
-
-### Docker Compose
-
-```yaml
-services:
-  temp-cloud:
-    image: zbc0315/temp-cloud:latest
-    container_name: temp-cloud
-    restart: unless-stopped
-    ports:
-      - "2012:3000"
-    environment:
-      TZ: Asia/Shanghai
-      PORT: 3000
-    volumes:
-      - ./data:/app/data
-```
-
-This is suitable for NAS users who want to pull and run the image directly without building locally.
+- Metadata is stored in `data/items.json`
+- Uploaded files are stored in `data/uploads/`
+- Expired content is removed automatically
+- Maximum single file size is 100MB
