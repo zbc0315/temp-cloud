@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Temp Cloud</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow" data-i18n="heroEyebrow">Local Temporary Transfer</p>
+          <h1>Temp Cloud</h1>
+          <p class="lead" data-i18n="heroLead">
+            在局域网内临时中转文件、文字和图片。默认保存 1 小时，最长 24 小时。
+          </p>
+        </div>
+        <div class="hero-side">
+          <div class="hero-actions">
+            <button type="button" id="language-toggle" class="ghost-btn">EN</button>
+            <button type="button" id="theme-toggle" class="ghost-btn" data-i18n="themeLight">Dark</button>
+          </div>
+          <div class="hero-note">
+            <span data-i18n="heroNotePublic">无密码内容可直接查看</span>
+            <span data-i18n="heroNoteProtected">有密码内容输入密码后显示</span>
+            <span data-i18n="heroNoteExpire">到期自动清理</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel-stage">
+        <div class="tabs section-tabs" id="section-tabs">
+          <button type="button" class="tab active" data-section="upload" data-i18n="tabUpload">上传与粘贴</button>
+          <button type="button" class="tab" data-section="download" data-i18n="tabDownload">下载与复制</button>
+        </div>
+
+        <div id="upload-section" class="section-panel active">
+          <div class="panel-head">
+            <h2 data-i18n="uploadTitle">上传与粘贴</h2>
+            <p data-i18n="uploadDesc">支持文件、文本和图片剪贴板</p>
+          </div>
+
+          <form id="upload-form" class="form">
+            <div class="tabs" id="kind-tabs">
+              <button type="button" class="tab active" data-kind="file" data-i18n="kindFile">文件</button>
+              <button type="button" class="tab" data-kind="text" data-i18n="kindText">文本</button>
+              <button type="button" class="tab" data-kind="image" data-i18n="kindImage">图片</button>
+            </div>
+
+            <label>
+              <span data-i18n="fieldTitle">标题（可选）</span>
+              <input
+                type="text"
+                name="title"
+                maxlength="80"
+                data-i18n-placeholder="placeholderTitle"
+                placeholder="例如：设计稿、验证码、截图"
+              />
+            </label>
+
+            <div id="file-panel" class="kind-panel active">
+              <label class="dropzone">
+                <input id="file-input" type="file" name="file" />
+                <span id="file-name" data-i18n="filePrompt">选择文件或拖拽到这里</span>
+              </label>
+            </div>
+
+            <div id="text-panel" class="kind-panel">
+              <label>
+                <span data-i18n="fieldText">文本内容</span>
+                <textarea
+                  id="text-input"
+                  name="text"
+                  rows="8"
+                  data-i18n-placeholder="placeholderText"
+                  placeholder="在这里粘贴文字内容"
+                ></textarea>
+              </label>
+            </div>
+
+            <div id="image-panel" class="kind-panel">
+              <label class="dropzone">
+                <input id="image-input" type="file" accept="image/*" />
+                <span id="image-name" data-i18n="imagePrompt">粘贴图片、拖拽图片或点击选择</span>
+              </label>
+              <div id="image-preview" class="image-preview hidden"></div>
+            </div>
+
+            <div class="row">
+              <label>
+                <span data-i18n="fieldPassword">临时密码（可留空）</span>
+                <input
+                  type="text"
+                  name="password"
+                  data-i18n-placeholder="placeholderPassword"
+                  placeholder="留空即为无密码模式"
+                />
+              </label>
+              <label>
+                <span data-i18n="fieldExpire">保存时间</span>
+                <select name="expiresHours" id="expires-hours"></select>
+              </label>
+            </div>
+
+            <button type="submit" class="primary" data-i18n="save">保存</button>
+            <p id="form-status" class="status"></p>
+          </form>
+        </div>
+
+        <div id="download-section" class="section-panel">
+          <div class="panel-head">
+            <h2 data-i18n="downloadTitle">下载与复制</h2>
+            <p data-i18n="downloadDesc">无密码内容默认显示，有密码内容需要输入密码</p>
+          </div>
+
+          <form id="password-form" class="inline-form">
+            <input
+              type="text"
+              name="password"
+              data-i18n-placeholder="placeholderLookupPassword"
+              placeholder="输入密码查看对应内容"
+            />
+            <button type="submit" data-i18n="view">查看</button>
+          </form>
+          <p id="password-status" class="status"></p>
+
+          <div id="protected-section" class="list-section hidden">
+            <div class="list-head">
+              <h3 data-i18n="protectedSectionTitle">密码内容</h3>
+              <span id="protected-caption" data-i18n="protectedCaptionDefault">输入密码后显示</span>
+            </div>
+            <div id="protected-list" class="item-list empty" data-i18n="empty">暂无内容</div>
+          </div>
+
+          <div class="list-section">
+            <div class="list-head">
+              <h3 data-i18n="publicSectionTitle">无密码内容</h3>
+              <button type="button" id="refresh-public" data-i18n="refresh">刷新</button>
+            </div>
+            <div id="public-list" class="item-list empty" data-i18n="empty">暂无内容</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <template id="item-template">
+      <article class="card">
+        <div class="card-top">
+          <div>
+            <span class="pill item-kind"></span>
+            <h4 class="item-title"></h4>
+          </div>
+          <span class="item-expire"></span>
+        </div>
+        <p class="item-meta"></p>
+        <div class="item-preview"></div>
+        <div class="item-actions"></div>
+      </article>
+    </template>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
