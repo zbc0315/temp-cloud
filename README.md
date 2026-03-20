@@ -5,6 +5,8 @@
 [![Docker Image Version](https://img.shields.io/docker/v/zbc0315/temp-cloud?label=docker%20hub&sort=semver)](https://hub.docker.com/r/zbc0315/temp-cloud)
 [![Docker Pulls](https://img.shields.io/docker/pulls/zbc0315/temp-cloud)](https://hub.docker.com/r/zbc0315/temp-cloud)
 
+中文 | [English](#english)
+
 一个用于本地局域网的临时中转 Web 应用，支持：
 
 - 上传文件
@@ -96,3 +98,97 @@ services:
 ```
 
 适合 NAS 用户直接拉取运行，无需本地构建镜像。
+
+## English
+
+Temp Cloud is a temporary LAN transfer web app for:
+
+- File upload
+- Text clipboard sharing
+- Image clipboard sharing
+- Public sharing without password
+- Password-protected temporary access
+- Custom retention time, default 1 hour, maximum 24 hours
+- Automatic expiration cleanup
+
+## Local Run
+
+```bash
+npm install
+npm start
+```
+
+Default listen address:
+
+```text
+http://0.0.0.0:3000
+```
+
+Other devices on the same LAN can access it through the server IP, for example:
+
+```text
+http://192.168.1.10:3000
+```
+
+## Notes
+
+- Data is stored in `data/items.json`
+- Uploaded files are stored in `data/uploads/`
+- Expired content is deleted automatically on startup and during runtime
+- Maximum single file size is 100MB
+
+## Docker Deployment
+
+A complete Docker deployment setup is included:
+
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+See [DEPLOYMENT.md](/home/zbc/Projects/temp-cloud/DEPLOYMENT.md) for details.
+
+## Docker Hub
+
+Image:
+
+```text
+docker.io/zbc0315/temp-cloud
+```
+
+Available tags:
+
+```text
+latest
+1.0.0
+```
+
+### Run Directly
+
+```bash
+docker run -d \
+  --name temp-cloud \
+  -p 2012:3000 \
+  -v /path/to/temp-cloud-data:/app/data \
+  --restart unless-stopped \
+  zbc0315/temp-cloud:latest
+```
+
+### Docker Compose
+
+```yaml
+services:
+  temp-cloud:
+    image: zbc0315/temp-cloud:latest
+    container_name: temp-cloud
+    restart: unless-stopped
+    ports:
+      - "2012:3000"
+    environment:
+      TZ: Asia/Shanghai
+      PORT: 3000
+    volumes:
+      - ./data:/app/data
+```
+
+This is suitable for NAS users who want to pull and run the image directly without building locally.
