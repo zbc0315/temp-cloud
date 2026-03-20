@@ -30,6 +30,24 @@
 
 ## 使用方法
 
+## 界面预览
+
+### 首页与上传入口
+
+![Temp Cloud 首页与上传入口](docs/images/temp-cloud-home-upload.png)
+
+### 文本上传
+
+![Temp Cloud 文本上传](docs/images/temp-cloud-upload-text.png)
+
+### 无密码内容获取
+
+![Temp Cloud 无密码内容获取](docs/images/temp-cloud-download-public.png)
+
+### 密码内容获取
+
+![Temp Cloud 密码内容获取](docs/images/temp-cloud-download-protected.png)
+
 ### 1. 上传或粘贴内容
 
 打开网页后，在“上传与粘贴”页签中：
@@ -152,6 +170,24 @@ Typical use cases:
 - Suitable for local servers, NAS devices, homelabs, and office LANs
 
 ## How To Use
+
+## Screenshots
+
+### Home And Upload
+
+![Temp Cloud home and upload](docs/images/temp-cloud-home-upload.png)
+
+### Text Upload
+
+![Temp Cloud text upload](docs/images/temp-cloud-upload-text.png)
+
+### Public Content Retrieval
+
+![Temp Cloud public content retrieval](docs/images/temp-cloud-download-public.png)
+
+### Protected Content Retrieval
+
+![Temp Cloud protected content retrieval](docs/images/temp-cloud-download-protected.png)
 
 ### 1. Upload or paste content
 
