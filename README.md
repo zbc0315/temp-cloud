@@ -4,6 +4,7 @@
 [![Create GitHub Release](https://github.com/zbc0315/temp-cloud/actions/workflows/release.yml/badge.svg)](https://github.com/zbc0315/temp-cloud/actions/workflows/release.yml)
 [![Docker Image Version](https://img.shields.io/docker/v/zbc0315/temp-cloud?label=docker%20hub&sort=semver)](https://hub.docker.com/r/zbc0315/temp-cloud)
 [![Docker Pulls](https://img.shields.io/docker/pulls/zbc0315/temp-cloud)](https://hub.docker.com/r/zbc0315/temp-cloud)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 中文 | [English](#english)
 
@@ -143,6 +144,10 @@ chmod +x deploy.sh
 - 上传文件保存在 `data/uploads/`
 - 过期内容会自动删除
 - 单文件上传限制为 100MB
+
+## License
+
+MIT
 
 ---
 
@@ -284,3 +289,7 @@ See [DEPLOYMENT.md](/home/zbc/Projects/temp-cloud/DEPLOYMENT.md) for full deploy
 - Uploaded files are stored in `data/uploads/`
 - Expired content is removed automatically
 - Maximum single file size is 100MB
+
+## License
+
+MIT
