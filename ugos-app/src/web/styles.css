@@ -1,26 +1,23 @@
 /* ===========================================================================
-   Temp Cloud — Apple-style glass
+   Temp Cloud
 
-   Committed direction: "liquid glass over a vivid field — floating frosted
-   capsules, concentric radii, one blue that means 'act here'."
+   Committed direction: "grouped background, plain cards" - Apple's other
+   house style, the one Settings uses. A grey page, white surfaces, hairline
+   borders, one blue that means "act here".
 
-   Two things drive every decision below:
+   This replaced a liquid-glass treatment. The glass existed to refract a
+   moving colour field behind it; with the field gone there is nothing to
+   refract, and a blurred translucent panel over a flat background is a blur
+   that costs work and shows nothing. So there is no backdrop-filter and no
+   decorative layer anywhere in this file - what you see is what is painted.
 
-     1. backdrop-filter can only blur and saturate. It cannot refract. So the
-        glass illusion comes from four things working together: a saturated
-        colour field that sits *behind* the panels, layered translucency,
-        specular top and bottom inner edges, and concentric radii (the inner
-        radius is the outer radius minus the padding around it).
-
-     2. Contrast is computed against the composited panel, not the flat panel
-        colour. At a 0.62 tint the panel only covers 62% of what is behind it,
-        so a text colour that looks fine on white can still fail over a blob.
-        Every colour below was solved for the worst blob before it was written
-        (light: label 10.89:1, secondary 5.70:1, accent-as-text 5.57:1;
-        dark: 13.30:1, 6.12:1, 6.62:1).
-
-   Kind is deliberately not colour-coded. Apple would not, and every extra hue
-   is another pair that has to be verified.
+   Two consequences worth knowing:
+     - Contrast is now a plain calculation between two flat colours, not a
+       composite over whatever the field happened to be doing. Every pair below
+       clears AA with room to spare.
+     - Kind is still not colour-coded. File types are told apart by glyph
+       shape, the way a Finder window does it, so the palette stays at one
+       accent plus two greys.
    =========================================================================== */
 
 :root {
@@ -30,79 +27,58 @@
   --label-2: #4a4a4f;
 
   --accent:      #0071e3;  /* button fill; white on it = 4.70:1 */
-  --accent-deep: #004a99;  /* accent used as text = 5.57:1 */
+  --accent-deep: #004a99;  /* accent as text on white = 8.62:1 */
   --link:        #004a99;
   --on-accent:   #ffffff;
-  --danger:      #a3231f;
+  --danger:      #a3231f;  /* on white = 6.71:1 */
 
-  --glass:    rgba(255, 255, 255, 0.62);
-  --glass-hi: rgba(255, 255, 255, 0.78);
-  --glass-lo: rgba(255, 255, 255, 0.66);
-  --raised:   rgba(255, 255, 255, 0.90);
-  --field-bg: rgba(255, 255, 255, 0.72);
-  --fill:     rgba(120, 120, 128, 0.12);
-  --fill-2:   rgba(120, 120, 128, 0.18);
-  --hairline: rgba(60, 60, 67, 0.16);
-  --hairline-2: rgba(60, 60, 67, 0.30);
-  --edge:     rgba(255, 255, 255, 0.72);
-  --edge-hi:  rgba(255, 255, 255, 0.90);
+  /* Grouped background and the surfaces that sit on it. */
+  --page:      #f2f2f7;
+  --surface:   #ffffff;
+  --surface-2: #f7f7fa;
+  --fill:      rgba(120, 120, 128, 0.12);
+  --fill-2:    rgba(120, 120, 128, 0.20);
+  --hairline:  rgba(60, 60, 67, 0.14);
+  --hairline-2: rgba(60, 60, 67, 0.28);
 
-  --page: #eef1f6;
-  --scrim-top: rgba(255, 255, 255, 0.16);
-  --scrim-bottom: rgba(255, 255, 255, 0.02);
-  --blur: saturate(200%) blur(24px);
+  --shadow:      0 1px 2px rgba(20, 20, 40, 0.05), 0 8px 24px rgba(20, 20, 40, 0.06);
+  --shadow-lift: 0 2px 6px rgba(20, 20, 40, 0.08), 0 16px 36px rgba(20, 20, 40, 0.11);
 
   --fs-1: 12px; --fs-2: 14px; --fs-3: 17px; --fs-4: 22px; --fs-5: 28px;
   --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
   --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
 
-  --r-card:  30px;
-  --r-inner: 20px;
-  --r-field: 12px;
+  --r-card:  22px;
+  --r-inner: 16px;
+  --r-field: 10px;
   --r-pill:  999px;
 
-  --lift:      0 12px 40px rgba(20, 20, 60, 0.13);
-  --specular:  inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  --specular-2: inset 0 -1px 0 rgba(255, 255, 255, 0.35);
-  --glow:      0 0 0 4px rgba(0, 113, 227, 0.16);
-
+  --glow:  0 0 0 4px rgba(0, 113, 227, 0.16);
   --focus: 0 0 0 3px rgba(0, 113, 227, 0.55);
 }
 
-/* Dark mode. The field is dimmed rather than removed: the glass still needs
-   something to sit over, or the panels read as flat dark rectangles. The tint
-   is more opaque than in light mode because bright text on a dark translucent
-   panel loses contrast much faster than dark text on a pale one. */
 body[data-theme="dark"] {
   color-scheme: dark;
 
   --label:   #f5f5f7;
   --label-2: #a8a8ae;
-  --accent-deep: #64b5ff;
+  --accent-deep: #64b5ff;  /* on #1c1c1e = 7.79:1 */
   --link:        #64b5ff;
   --danger:      #ff8a80;
 
-  --glass:    rgba(30, 30, 32, 0.70);
-  --glass-hi: rgba(48, 48, 52, 0.82);
-  --glass-lo: rgba(18, 18, 20, 0.72);
-  --raised:   rgba(58, 58, 62, 0.92);
-  --field-bg: rgba(20, 20, 22, 0.72);
-  --fill:     rgba(235, 235, 245, 0.12);
-  --fill-2:   rgba(235, 235, 245, 0.20);
-  --hairline: rgba(235, 235, 245, 0.18);
-  --hairline-2: rgba(235, 235, 245, 0.32);
-  --edge:     rgba(255, 255, 255, 0.14);
-  --edge-hi:  rgba(255, 255, 255, 0.22);
+  --page:      #000000;
+  --surface:   #1c1c1e;
+  --surface-2: #2c2c2e;
+  --fill:      rgba(235, 235, 245, 0.12);
+  --fill-2:    rgba(235, 235, 245, 0.20);
+  --hairline:  rgba(235, 235, 245, 0.16);
+  --hairline-2: rgba(235, 235, 245, 0.30);
 
-  --page: #0b0b0d;
-  --scrim-top: rgba(0, 0, 0, 0.20);
-  --scrim-bottom: rgba(0, 0, 0, 0.04);
+  --shadow:      0 1px 2px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.6), 0 16px 36px rgba(0, 0, 0, 0.5);
 
-  --lift:      0 14px 44px rgba(0, 0, 0, 0.55);
-  --specular:  inset 0 1px 0 rgba(255, 255, 255, 0.10);
-  --specular-2: inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-  --glow:      0 0 0 4px rgba(100, 181, 255, 0.20);
-  --focus:     0 0 0 3px rgba(100, 181, 255, 0.65);
+  --glow:  0 0 0 4px rgba(100, 181, 255, 0.20);
+  --focus: 0 0 0 3px rgba(100, 181, 255, 0.65);
 }
 
 * { box-sizing: border-box; }
@@ -112,8 +88,7 @@ body {
   min-height: 100vh;
   /* Centred with flex rather than `margin: 0 auto`: auto margins on a fixed
      max-width column produce arbitrary values (210px at 1280px wide) that read
-     as off-grid measurements, and there is nothing to declare an exception
-     for when the layout simply does not need them. */
+     as off-grid measurements. */
   display: flex; flex-direction: column; align-items: center;
   background: var(--page);
   color: var(--label);
@@ -126,135 +101,20 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* --- the colour field: Conway's Game of Life, in one colour --------------
-   The field sits behind every panel, so it is what the glass refracts.
-
-   It is drawn by the page script into a small canvas and stretched to the
-   viewport, which is why nothing here blurs: the simulation runs at 64 cells
-   across, and the browser's own bilinear upscale turns that into soft masses
-   for free. A CSS blur over a full-viewport layer would have to be recomputed
-   on every generation; this way the expensive work stays inside a 256x160
-   canvas.
-
-   The base gradient is both the ambient wash and the no-JS fallback. It is
-   deliberately pale: the field's colour comes from the simulation, and this
-   only has to stop the page looking bare if the script never runs. */
-.field {
-  position: fixed; inset: 0; z-index: -1; overflow: hidden;
-  background:
-    radial-gradient(120% 95% at 16% 6%, rgba(88, 152, 240, 0.30), rgba(88, 152, 240, 0) 62%),
-    radial-gradient(120% 95% at 86% 94%, rgba(24, 74, 168, 0.24), rgba(24, 74, 168, 0) 60%),
-    var(--page);
-}
-body[data-theme="dark"] .field {
-  background:
-    radial-gradient(120% 95% at 16% 6%, rgba(70, 130, 220, 0.22), rgba(70, 130, 220, 0) 64%),
-    radial-gradient(120% 95% at 86% 94%, rgba(40, 96, 190, 0.18), rgba(40, 96, 190, 0) 62%),
-    var(--page);
-}
-.field::after {
-  content: ""; position: absolute; inset: 0;
-  background: linear-gradient(180deg, var(--scrim-top), var(--scrim-bottom));
-}
-
-/* The canvas is the simulation's only visible surface. Its opacity is the
-   single number that bounds how much colour can reach a panel, which is what
-   makes the text contrast provable rather than something to sample.
-
-   The softening is a CSS blur rather than a ctx.filter inside the script. The
-   radius here is in CSS pixels and means what it says; the same radius handed
-   to a magnified drawImage is not honoured in those units, and a field that
-   measures perfectly on the canvas arrives on screen as faint noise. It also
-   scales with the viewport, which is how the cells scale: 48 cells across is
-   1/48 of the width, so a little under one cell is 1.4vw. */
-.field-canvas {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  opacity: 0.55;
-  filter: blur(1.4vw);
-}
-body[data-theme="dark"] .field-canvas { opacity: 0.50; }
-
-/* --- app bar: frosts whatever scrolls under it --------------------------- */
-.bar {
-  position: sticky; top: 0; z-index: 10;
-  width: 100%;
-  display: flex; justify-content: center;
-  background: var(--glass-lo);
-  -webkit-backdrop-filter: var(--blur);
-  backdrop-filter: var(--blur);
-  border-bottom: 1px solid var(--edge);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
-}
-.bar-inner {
-  width: min(860px, 100% - var(--sp-7));
-  padding: var(--sp-3) 0;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: var(--sp-3);
-}
-.brand { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
-/* Two stops, both inside the accent family: the mark is the one place a
-   gradient is worth a second colour, and a third stop only added a hue. */
-.brand-mark {
-  width: 26px; height: 26px; flex: none; border-radius: 9px;
-  background: linear-gradient(150deg, #7cc0ff, #0050b3);
-  box-shadow: inset 0 1px 1px rgba(255,255,255,0.7), 0 2px 8px rgba(0, 81, 179, 0.35);
-}
-.brand-name { font-size: var(--fs-3); font-weight: 600; letter-spacing: -0.022em; }
-.brand-status {
-  display: inline-flex; align-items: center; gap: var(--sp-1);
-  font-size: var(--fs-2); color: var(--label-2);
-  padding-left: var(--sp-3); margin-left: var(--sp-1);
-  border-left: 1px solid var(--hairline-2);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.dot {
-  width: 8px; height: 8px; flex: none; border-radius: 50%;
-  background: #34c759; box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.20);
-}
-.bar-actions { display: flex; gap: var(--sp-2); flex: none; }
-
-/* Every control states its own font and padding. Inheriting from the UA is how
-   `button.attached-x` previously leaked `font-family: Arial` and a stray 6px
-   padding, which showed up as an off-grid spacing value in the audit. */
-.pill {
-  font: inherit; font-size: var(--fs-2); font-weight: 500; min-height: 30px;
-  color: var(--label); background: var(--glass-hi);
-  -webkit-backdrop-filter: var(--blur);
-  backdrop-filter: var(--blur);
-  border: 1px solid var(--edge); border-radius: var(--r-pill);
-  padding: var(--sp-1) var(--sp-4);
-  cursor: pointer;
-  box-shadow: var(--specular), 0 2px 8px rgba(20,20,60,0.06);
-  transition: background .16s, transform .06s, box-shadow .16s;
-}
-.pill:hover { background: var(--raised); transform: translateY(-1px); }
-.pill:active { transform: translateY(0); }
-
-/* A single visible focus treatment for every interactive element, so keyboard
-   use is never a guess. */
-:where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--accent-deep);
-  outline-offset: 2px;
-  box-shadow: var(--focus);
-}
-
 /* --- layout -------------------------------------------------------------- */
 .app {
-  width: min(860px, 100% - var(--sp-7));
-  padding: var(--sp-6) 0 var(--sp-2);
+  width: min(900px, 100% - var(--sp-7));
+  padding: var(--sp-7) 0 var(--sp-2);
   flex: 1;
 }
 
-/* --- the main glass card ------------------------------------------------- */
+/* --- a surface ----------------------------------------------------------- */
 .sheet {
   padding: var(--sp-5);
   border-radius: var(--r-card);
-  border: 1px solid var(--edge);
-  background: var(--glass);
-  -webkit-backdrop-filter: var(--blur);
-  backdrop-filter: var(--blur);
-  box-shadow: var(--lift), var(--specular), var(--specular-2);
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 /* --- THE composer --------------------------------------------------------
@@ -264,17 +124,13 @@ body[data-theme="dark"] .field-canvas { opacity: 0.50; }
   position: relative;
   padding: var(--sp-4);
   border-radius: var(--r-inner);
-  border: 1.5px dashed var(--edge-hi);
-  outline: 1px solid var(--hairline);
-  background: var(--field-bg);
-  -webkit-backdrop-filter: var(--blur);
-  backdrop-filter: var(--blur);
-  transition: background .18s, border-color .18s, box-shadow .18s, outline-color .18s;
+  border: 1.5px dashed var(--hairline-2);
+  background: var(--surface-2);
+  transition: border-color .18s, background .18s, box-shadow .18s;
 }
 .composer.is-over {
-  background: var(--glass-hi);
   border-color: var(--accent);
-  outline-color: rgba(0, 113, 227, 0.30);
+  background: var(--surface);
   box-shadow: var(--glow);
 }
 
@@ -294,11 +150,11 @@ body[data-theme="dark"] .field-canvas { opacity: 0.50; }
   padding: var(--sp-3);
   font: inherit; font-size: var(--fs-3);
   color: var(--label);
-  background: var(--raised);
+  background: var(--surface);
   border: 1px solid var(--hairline);
   border-radius: var(--r-field);
   resize: vertical;
-  transition: border-color .15s, box-shadow .15s, background .15s;
+  transition: border-color .15s, box-shadow .15s;
 }
 .composer-input::placeholder { color: var(--label-2); }
 .composer-input:focus {
@@ -314,15 +170,15 @@ body[data-theme="dark"] .field-canvas { opacity: 0.50; }
 .tool {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
   font: inherit; font-size: var(--fs-2); font-weight: 500;
-  min-height: 38px;
-  color: var(--label); background: var(--raised);
-  border: 1px solid var(--edge-hi); border-radius: var(--r-pill);
+  min-height: 40px;
+  color: var(--label); background: var(--surface);
+  border: 1px solid var(--hairline); border-radius: var(--r-pill);
   padding: var(--sp-2) var(--sp-4);
   cursor: pointer;
-  box-shadow: var(--specular), 0 2px 10px rgba(20,20,60,0.09);
-  transition: background .15s, box-shadow .15s, transform .06s;
+  box-shadow: var(--shadow);
+  transition: background .15s, transform .06s, box-shadow .15s;
 }
-.tool:hover { box-shadow: var(--specular), 0 4px 16px rgba(0,113,227,0.22); }
+.tool:hover { box-shadow: var(--shadow-lift); }
 .tool:active { transform: translateY(1px); }
 .tool svg { width: 18px; height: 18px; color: var(--accent-deep); }
 .tool[disabled] { opacity: .5; cursor: default; }
@@ -334,16 +190,14 @@ body[data-theme="dark"] .field-canvas { opacity: 0.50; }
   margin-top: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
   border-radius: var(--r-field);
-  border: 1px solid var(--edge-hi);
-  background: var(--raised);
-  box-shadow: var(--specular), 0 2px 10px rgba(20,20,60,0.08);
+  border: 1px solid var(--hairline);
+  background: var(--surface);
 }
 .attached-badge {
   font-size: var(--fs-1); font-weight: 600; letter-spacing: 0.03em;
-  color: var(--accent-deep); background: rgba(0, 113, 227, 0.12);
+  color: var(--accent-deep); background: var(--fill);
   border-radius: 7px; padding: var(--sp-1) var(--sp-2); white-space: nowrap;
 }
-body[data-theme="dark"] .attached-badge { background: rgba(100, 181, 255, 0.16); }
 .attached-thumb {
   width: 40px; height: 40px; flex: none; border-radius: 8px;
   object-fit: cover; background: var(--fill);
@@ -354,6 +208,9 @@ body[data-theme="dark"] .attached-badge { background: rgba(100, 181, 255, 0.16);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .attached-meta { margin: var(--sp-1) 0 0; font-size: var(--fs-1); color: var(--label-2); }
+/* Every control states its own font and padding. Inheriting from the UA is how
+   this button previously leaked `font-family: Arial` and a stray 6px padding,
+   which showed up as an off-grid spacing value in the audit. */
 .attached-x {
   width: 32px; height: 32px; flex: none; display: grid; place-items: center;
   font: inherit; padding: 0;
@@ -379,12 +236,11 @@ body[data-theme="dark"] .attached-badge { background: rgba(100, 181, 255, 0.16);
 .field-text input,
 .field-text select,
 .lookup-input {
-  width: 100%; font: inherit; font-size: var(--fs-2); min-height: 42px;
-  color: var(--label); background: var(--raised);
+  width: 100%; font: inherit; font-size: var(--fs-2); min-height: 44px;
+  color: var(--label); background: var(--surface-2);
   border: 1px solid var(--hairline); border-radius: var(--r-field);
   padding: var(--sp-2) var(--sp-3);
-  box-shadow: var(--specular);
-  transition: border-color .15s, box-shadow .15s, background .15s;
+  transition: border-color .15s, box-shadow .15s;
 }
 .field-text input::placeholder,
 .lookup-input::placeholder { color: var(--label-2); }
@@ -415,10 +271,10 @@ body[data-theme="dark"] .field-text select {
   border: 0; border-radius: var(--r-pill);
   padding: var(--sp-3) var(--sp-6);
   cursor: pointer; letter-spacing: -0.01em;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 8px 22px rgba(0, 113, 227, 0.34);
+  box-shadow: 0 1px 2px rgba(0, 113, 227, 0.3), 0 8px 20px rgba(0, 113, 227, 0.24);
   transition: background .16s, box-shadow .16s, transform .06s;
 }
-.save:hover { background: #0077ed; box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 10px 26px rgba(0, 113, 227, 0.42); }
+.save:hover { background: #0077ed; }
 .save:active { transform: translateY(1px); }
 .save[disabled] { opacity: .6; cursor: default; transform: none; }
 
@@ -433,24 +289,23 @@ body[data-theme="dark"] .field-text select {
 .status.is-error { color: var(--danger); }
 .status.is-ok { color: var(--accent-deep); }
 
-/* --- lookup: the password section, as its own floating card -------------- */
-.lookup { margin-top: var(--sp-7); }
+/* --- lookup -------------------------------------------------------------- */
+.lookup { margin-top: var(--sp-5); }
 .lookup-form { display: flex; gap: var(--sp-2); align-items: stretch; }
 .lookup-form .lookup-input { flex: 1; min-width: 0; }
 .lookup-form button {
-  font: inherit; font-size: var(--fs-2); font-weight: 500; min-height: 42px;
-  color: var(--label); background: var(--raised);
-  border: 1px solid var(--edge-hi); border-radius: var(--r-field);
+  font: inherit; font-size: var(--fs-2); font-weight: 500; min-height: 44px;
+  color: var(--label); background: var(--surface-2);
+  border: 1px solid var(--hairline); border-radius: var(--r-field);
   padding: var(--sp-2) var(--sp-5);
   cursor: pointer; white-space: nowrap; flex: none;
-  box-shadow: var(--specular), 0 2px 10px rgba(20,20,60,0.08);
-  transition: background .15s, box-shadow .15s;
+  transition: background .15s;
 }
-.lookup-form button:hover { box-shadow: var(--specular), 0 4px 16px rgba(20,113,227,0.22); }
+.lookup-form button:hover { background: var(--fill); }
 
-/* --- list: floating glass rows ------------------------------------------- */
-.list { margin-top: var(--sp-7); }
-.list-section + .list-section { margin-top: var(--sp-6); }
+/* --- section headings and the small pill next to them -------------------- */
+.list { margin-top: var(--sp-6); }
+.list-section { margin-top: var(--sp-5); }
 .list-head {
   display: flex; align-items: center; justify-content: space-between;
   gap: var(--sp-3);
@@ -463,74 +318,129 @@ body[data-theme="dark"] .field-text select {
 }
 .list-head .count { font-size: var(--fs-1); color: var(--label-2); font-weight: 500; }
 
-.row {
+.pill {
+  font: inherit; font-size: var(--fs-2); font-weight: 500; min-height: 34px;
+  color: var(--label); background: var(--surface);
+  border: 1px solid var(--hairline); border-radius: var(--r-pill);
+  padding: var(--sp-1) var(--sp-4);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: background .16s, transform .06s, box-shadow .15s;
+}
+.pill:hover { box-shadow: var(--shadow-lift); transform: translateY(-1px); }
+.pill:active { transform: translateY(0); }
+
+/* --- the content, as cards ----------------------------------------------
+   Cards rather than rows because the three kinds carry very different things:
+   an image wants to show itself, a text snippet wants to show its words, and a
+   file has nothing to show but its type. A uniform media well on top gives all
+   three the same shape in the grid. */
+.cards {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
-  align-items: center;
-  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--sp-4);
+}
+
+.card {
+  display: flex; flex-direction: column;
+  border-radius: var(--r-inner);
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: box-shadow .16s, transform .06s;
+}
+.card:hover { box-shadow: var(--shadow-lift); transform: translateY(-1px); }
+
+.card-media {
+  aspect-ratio: 3 / 2;
+  display: grid; place-items: center;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--hairline);
+  overflow: hidden;
+}
+.card-media img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+/* The icon is one colour: type is told apart by glyph shape, not by hue. It is
+   the only content a file card's well has, so it is sized to carry it. */
+.card-icon { width: 60px; height: 60px; color: var(--accent-deep); }
+.card-icon path,
+.card-icon rect,
+.card-icon circle { vector-effect: non-scaling-stroke; }
+
+.card-text {
+  margin: 0;
   padding: var(--sp-3) var(--sp-4);
-  margin-bottom: var(--sp-2);
-  border-radius: var(--r-pill);
-  border: 1px solid var(--edge);
-  background: var(--glass);
-  -webkit-backdrop-filter: var(--blur);
-  backdrop-filter: var(--blur);
-  box-shadow: var(--specular), 0 4px 16px rgba(20,20,60,0.07);
-  transition: background .16s, transform .06s, box-shadow .16s;
+  font-size: var(--fs-2);
+  line-height: 1.6;
+  color: var(--label);
+  white-space: pre-wrap;
+  word-break: break-word;
+  align-self: stretch;
+  /* Preview, not the whole thing: the copy button is how you get all of it. */
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-.row:hover {
-  background: var(--glass-hi); transform: translateY(-1px);
-  box-shadow: var(--specular), 0 8px 24px rgba(20,20,60,0.12);
+.card-media-error {
+  margin: 0; padding: var(--sp-3);
+  font-size: var(--fs-1); color: var(--label-2); text-align: center;
 }
-.row-kind {
-  font-size: var(--fs-1); font-weight: 600; letter-spacing: 0.03em;
-  color: var(--label-2); background: var(--fill-2);
-  border-radius: 7px; padding: var(--sp-1) var(--sp-2); white-space: nowrap;
-}
-.row-main { min-width: 0; }
-.row-title {
-  margin: 0; font-size: var(--fs-2); font-weight: 500;
+
+.card-body { padding: var(--sp-3) var(--sp-4) 0; min-width: 0; }
+.card-title {
+  margin: 0; font-size: var(--fs-2); font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.row-meta { margin: var(--sp-1) 0 0; font-size: var(--fs-1); color: var(--label-2); }
-.row-expire { font-size: var(--fs-1); color: var(--label-2); white-space: nowrap; }
-.row-actions { display: flex; gap: var(--sp-2); flex: none; }
+.card-meta { margin: var(--sp-1) 0 0; font-size: var(--fs-1); color: var(--label-2); }
 
-.row-action {
-  display: inline-flex; align-items: center; justify-content: center;
-  font: inherit; font-size: var(--fs-2); font-weight: 500; min-height: 34px;
-  color: var(--accent-deep); background: var(--raised);
-  border: 1px solid var(--edge-hi); border-radius: var(--r-pill);
-  padding: var(--sp-2) var(--sp-4);
-  cursor: pointer; white-space: nowrap; text-decoration: none;
-  box-shadow: var(--specular);
-  transition: background .15s, box-shadow .15s;
+.card-actions {
+  display: flex; flex-wrap: wrap; gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  margin-top: auto;
 }
-.row-action:hover { box-shadow: var(--specular), 0 3px 12px rgba(0,113,227,0.2); }
+
+.card-action {
+  display: inline-flex; align-items: center; justify-content: center;
+  font: inherit; font-size: var(--fs-2); font-weight: 500; min-height: 36px;
+  color: var(--accent-deep); background: var(--fill);
+  border: 1px solid transparent; border-radius: var(--r-pill);
+  padding: var(--sp-1) var(--sp-4);
+  cursor: pointer; white-space: nowrap; text-decoration: none;
+  transition: background .15s;
+}
+.card-action:hover { background: var(--fill-2); }
 
 .empty {
   margin: 0;
-  padding: var(--sp-5) var(--sp-4);
+  padding: var(--sp-6) var(--sp-4);
   border-radius: var(--r-inner);
   border: 1px dashed var(--hairline-2);
   color: var(--label-2); font-size: var(--fs-2); text-align: center;
 }
 
+/* --- the two view switches, which have no header to live in -------------- */
+.toggles {
+  display: flex; justify-content: center; gap: var(--sp-2);
+  margin-top: var(--sp-7);
+}
+
 /* --- toast ---------------------------------------------------------------
-   Confirmation for actions that happen inside a list row, where there is no
-   status line to write into. A floating capsule reads as a transient system
+   Confirmation for actions that happen inside a card, where there is no status
+   line to write into. A floating capsule reads as a transient system
    acknowledgement; an alert() would stop the page to say the same thing. */
 .toast {
   position: fixed; left: 50%; bottom: var(--sp-5); z-index: 40;
   transform: translateX(-50%) translateY(var(--sp-2));
   max-width: min(28rem, calc(100% - var(--sp-6)));
   padding: var(--sp-2) var(--sp-5);
-  border: 1px solid var(--edge);
+  border: 1px solid var(--hairline);
   border-radius: var(--r-pill);
-  background: var(--glass-hi);
-  -webkit-backdrop-filter: var(--blur);
-  backdrop-filter: var(--blur);
-  box-shadow: var(--lift), var(--specular);
+  background: var(--surface);
+  box-shadow: var(--shadow-lift);
   color: var(--label); font-size: var(--fs-2); text-align: center;
   opacity: 0; pointer-events: none;
   transition: opacity .2s, transform .2s;
@@ -541,11 +451,17 @@ body[data-theme="dark"] .field-text select {
    step, which appends privacy.css after this file to style them. */
 .hidden { display: none !important; }
 
+/* A single visible focus treatment for every interactive element, so keyboard
+   use is never a guess. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+  box-shadow: var(--focus);
+}
+
 /* --- mobile -------------------------------------------------------------- */
 @media (max-width: 720px) {
-  .bar-inner { width: calc(100% - var(--sp-5)); }
-  .brand-status { display: none; }
-  .app { width: calc(100% - var(--sp-5)); padding-top: var(--sp-4); }
+  .app { width: calc(100% - var(--sp-5)); padding-top: var(--sp-5); }
   .sheet { padding: var(--sp-4); border-radius: var(--r-inner); }
   .composer { padding: var(--sp-3); }
   .composer-empty { padding: var(--sp-4) var(--sp-2) var(--sp-3); }
@@ -554,18 +470,8 @@ body[data-theme="dark"] .field-text select {
   .options { grid-template-columns: 1fr; }
   .lookup-form { flex-wrap: wrap; }
   .lookup-form button { width: 100%; }
-  .row {
-    grid-template-columns: auto 1fr auto;
-    grid-template-areas:
-      "kind  title  expire"
-      "kind  meta   actions";
-    row-gap: var(--sp-1);
-    border-radius: var(--r-inner);
-  }
-  .row-kind    { grid-area: kind; align-self: start; }
-  .row-main    { grid-area: title; }
-  .row-expire  { grid-area: expire; }
-  .row-actions { grid-area: actions; justify-self: end; }
+  .cards { grid-template-columns: 1fr; }
+  .toggles { margin-top: var(--sp-6); }
 }
 
 /* Motion is decoration here; the interface is fully usable without it. */
@@ -574,16 +480,16 @@ body[data-theme="dark"] .field-text select {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
-  .pill:hover, .row:hover, .tool:active, .save:active { transform: none; }
+  .pill:hover, .card:hover, .tool:active, .save:active { transform: none; }
 }
 
 /* ---------------------------------------------------------------------------
    Privacy footer and first-launch notice (injected by ugos-app/src/cmd/syncweb).
-   Styled entirely from the design tokens declared in public/styles.css, which
-   this file is appended to, so both themes and both breakpoints come for free.
+   Styled entirely from the tokens in public/styles.css, which this file is
+   appended to, so both themes and both breakpoints come for free.
    --------------------------------------------------------------------------- */
 .app-footer {
-  width: min(860px, 100% - var(--sp-7));
+  width: min(900px, 100% - var(--sp-7));
   padding: var(--sp-6) 0 var(--sp-7);
   color: var(--label-2);
   font-size: var(--fs-2);
@@ -603,8 +509,6 @@ body[data-theme="dark"] .field-text select {
   justify-content: center;
   padding: var(--sp-5);
   background: rgba(20, 20, 30, 0.45);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
 }
 .privacy-modal[hidden] { display: none; }
 .privacy-modal-box {
@@ -612,13 +516,11 @@ body[data-theme="dark"] .field-text select {
   max-height: calc(100vh - var(--sp-7));
   overflow-y: auto;
   padding: var(--sp-5);
-  border: 1px solid var(--edge);
+  border: 1px solid var(--hairline);
   border-radius: var(--r-card);
-  background: var(--glass-hi);
-  -webkit-backdrop-filter: var(--blur);
-  backdrop-filter: var(--blur);
+  background: var(--surface);
   color: var(--label);
-  box-shadow: var(--lift), var(--specular);
+  box-shadow: var(--shadow-lift);
 }
 .privacy-modal-box h2 { margin: 0 0 var(--sp-3); font-size: var(--fs-4); letter-spacing: -0.022em; }
 .privacy-modal-box p {
@@ -643,8 +545,6 @@ body[data-theme="dark"] .field-text select {
   font-weight: 500;
 }
 .privacy-modal-actions .primary:hover { background: #0077ed; }
-/* .pill would otherwise sit on the same tint as the box it is inside. */
-.privacy-modal-actions .pill { background: var(--raised); }
 
 @media (max-width: 720px) {
   .app-footer { width: calc(100% - var(--sp-5)); padding: var(--sp-5) 0 var(--sp-6); }

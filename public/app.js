@@ -645,7 +645,7 @@ function setProtectedSectionVisible(visible) {
 function createActionButton(label, onClick) {
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "row-action";
+  button.className = "card-action";
   button.textContent = label;
   button.addEventListener("click", onClick);
   return button;
@@ -705,6 +705,192 @@ function itemTitle(item) {
   return item.originalName || t("itemUntitled");
 }
 
+/* --- file type ------------------------------------------------------------
+   Type is told apart by glyph shape rather than by colour. One accent for
+   every icon keeps the palette down to a single hue, and shape is what a
+   Finder window actually relies on. The extension decides; the MIME type is
+   the fallback for files that arrive with a name that says nothing. */
+const ICONS = {
+  archive:
+    '<path d="M4 3.5h16v3H4z"/><path d="M5 6.5V19a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19V6.5"/>' +
+    '<path d="M10 10.5h4v3h-4z"/>',
+  audio:
+    '<path d="M9 18V5.5l10-2V16"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/>',
+  video:
+    '<rect x="3" y="4.5" width="18" height="15" rx="2.5"/>' +
+    '<path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor" stroke="none"/>',
+  sheet:
+    '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/>' +
+    '<path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10M15 9.5v10"/>',
+  slide:
+    '<rect x="3.5" y="4" width="17" height="11.5" rx="1.5"/>' +
+    '<path d="M12 15.5V19"/><path d="M8.5 20.5h7"/>',
+  pdf:
+    '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>' +
+    '<path d="M14 3v5h5"/>' +
+    '<path d="M8.5 15h7v2.5h-7z" fill="currentColor" stroke="none"/>',
+  code:
+    '<path d="M9 8.5 4.5 12 9 15.5"/><path d="M15 8.5 19.5 12 15 15.5"/>' +
+    '<path d="M13.2 6l-2.4 12"/>',
+  document:
+    '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>' +
+    '<path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h4.5"/>',
+  generic:
+    '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>' +
+    '<path d="M14 3v5h5"/>'
+};
+
+const EXTENSION_KINDS = [
+  ["archive", "zip rar 7z tar gz bz2 xz tgz zst"],
+  ["audio", "mp3 wav flac m4a aac ogg opus aiff wma"],
+  ["video", "mp4 mov mkv avi webm m4v wmv flv mpg mpeg"],
+  ["pdf", "pdf"],
+  ["sheet", "xls xlsx csv ods numbers tsv"],
+  ["slide", "ppt pptx odp key"],
+  ["code", "js mjs ts tsx jsx go py rb rs java c h cpp hpp cs php sh bash zsh " +
+    "ps1 lua swift kt json yml yaml toml xml html css scss sql ini conf"],
+  ["document", "doc docx odt rtf txt md markdown pages tex"]
+];
+
+function fileKind(item) {
+  const name = String(item.originalName || item.title || "");
+  const dot = name.lastIndexOf(".");
+  if (dot > 0) {
+    const extension = name.slice(dot + 1).toLowerCase();
+    for (const [kind, list] of EXTENSION_KINDS) {
+      if (list.split(" ").indexOf(extension) !== -1) return kind;
+    }
+  }
+
+  const mime = String(item.mimeType || "");
+  if (mime.indexOf("zip") !== -1 || mime.indexOf("compressed") !== -1 ||
+      mime.indexOf("tar") !== -1 || mime.indexOf("rar") !== -1) return "archive";
+  if (mime.indexOf("audio/") === 0) return "audio";
+  if (mime.indexOf("video/") === 0) return "video";
+  if (mime.indexOf("image/") === 0) return "image";
+  if (mime.indexOf("pdf") !== -1) return "pdf";
+  if (mime.indexOf("sheet") !== -1 || mime.indexOf("excel") !== -1 ||
+      mime.indexOf("csv") !== -1) return "sheet";
+  if (mime.indexOf("presentation") !== -1 || mime.indexOf("powerpoint") !== -1) return "slide";
+  if (mime.indexOf("text/") === 0 || mime.indexOf("word") !== -1) return "document";
+  return "generic";
+}
+
+// Built from a fixed table, never from the item, so innerHTML is safe here.
+// Every user-supplied string in a card goes through textContent instead.
+function iconMarkup(kind) {
+  const body = ICONS[kind] || ICONS.generic;
+  return '<svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    body + "</svg>";
+}
+
+const TEXT_PREVIEW_LIMIT = 600;
+
+// What goes in the well at the top of a card. The three kinds carry very
+// different things: an image wants to show itself, a text snippet wants to show
+// its words, and a file has nothing to show but its type.
+function cardMedia(item, token) {
+  const media = document.createElement("div");
+  media.className = "card-media";
+
+  if (item.kind === "image") {
+    // The image lives behind the content endpoint, so the card fills in when
+    // that resolves rather than holding up the rest of the grid.
+    fetchContent(item, token)
+      .then((content) => {
+        const img = document.createElement("img");
+        img.alt = itemTitle(item);
+        img.src = content.dataUrl;
+        media.innerHTML = "";
+        media.appendChild(img);
+      })
+      .catch(() => {
+        media.innerHTML = "";
+        const failed = document.createElement("p");
+        failed.className = "card-media-error";
+        failed.textContent = t("imagePreviewFailed");
+        media.appendChild(failed);
+      });
+    return media;
+  }
+
+  if (item.kind === "text") {
+    const text = document.createElement("p");
+    text.className = "card-text";
+    const body = String(item.text || "");
+    // Capped so a very long paste does not put a whole document in the DOM.
+    // How much is actually visible is the CSS clamp's decision, which adapts
+    // to the card width.
+    text.textContent =
+      body.length > TEXT_PREVIEW_LIMIT ? body.slice(0, TEXT_PREVIEW_LIMIT) : body;
+    media.appendChild(text);
+    return media;
+  }
+
+  media.innerHTML = iconMarkup(fileKind(item));
+  return media;
+}
+
+function downloadLink(item, token, label) {
+  const link = document.createElement("a");
+  link.className = "card-action";
+  link.href = fileDownloadUrl(item, token);
+  link.textContent = label;
+  link.download = item.originalName || "file";
+  return link;
+}
+
+function buildCard(item, token) {
+  const node = itemTemplate.content.firstElementChild.cloneNode(true);
+  node.querySelector(".card-media").replaceWith(cardMedia(item, token));
+  node.querySelector(".card-title").textContent = itemTitle(item);
+  node.querySelector(".card-meta").textContent = [
+    kindLabel(item.kind),
+    item.size ? formatSize(item.size) : "",
+    t("itemExpire", { time: formatTime(item.expiresAt) })
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const actions = node.querySelector(".card-actions");
+
+  if (item.kind === "text") {
+    actions.appendChild(
+      createActionButton(t("copyText"), async () => {
+        try {
+          const content = await fetchContent(item, token);
+          await copyText(content.text);
+          toast(t("copiedText"));
+        } catch (error) {
+          toast(error.message);
+        }
+      })
+    );
+  }
+
+  if (item.kind === "image") {
+    actions.appendChild(downloadLink(item, token, t("downloadImage")));
+    actions.appendChild(
+      createActionButton(t("copyImage"), async () => {
+        try {
+          const content = await fetchContent(item, token);
+          await copyImage(content.dataUrl);
+          toast(t("copiedImage"));
+        } catch (error) {
+          toast(error.message);
+        }
+      })
+    );
+  }
+
+  if (item.kind === "file") {
+    actions.appendChild(downloadLink(item, token, t("downloadFile")));
+  }
+
+  return node;
+}
+
 function renderItems(container, items, token = "") {
   if (!items.length) {
     renderEmpty(container, t("empty"));
@@ -712,68 +898,10 @@ function renderItems(container, items, token = "") {
   }
 
   container.innerHTML = "";
-
-  items.forEach((item) => {
-    const node = itemTemplate.content.firstElementChild.cloneNode(true);
-    node.querySelector(".row-kind").textContent = kindLabel(item.kind);
-    node.querySelector(".row-title").textContent = itemTitle(item);
-    node.querySelector(".row-expire").textContent = t("itemExpire", {
-      time: formatTime(item.expiresAt)
-    });
-    node.querySelector(".row-meta").textContent = [
-      item.size ? formatSize(item.size) : "",
-      t("itemCreated", { time: formatTime(item.createdAt) })
-    ]
-      .filter(Boolean)
-      .join(" · ");
-
-    const actions = node.querySelector(".row-actions");
-
-    if (item.kind === "text") {
-      actions.appendChild(
-        createActionButton(t("copyText"), async () => {
-          try {
-            const content = await fetchContent(item, token);
-            await copyText(content.text);
-            toast(t("copiedText"));
-          } catch (error) {
-            toast(error.message);
-          }
-        })
-      );
-    }
-
-    if (item.kind === "image") {
-      const download = document.createElement("a");
-      download.className = "row-action";
-      download.href = fileDownloadUrl(item, token);
-      download.textContent = t("downloadImage");
-      download.download = item.originalName || "image";
-      actions.appendChild(download);
-      actions.appendChild(
-        createActionButton(t("copyImage"), async () => {
-          try {
-            const content = await fetchContent(item, token);
-            await copyImage(content.dataUrl);
-            toast(t("copiedImage"));
-          } catch (error) {
-            toast(error.message);
-          }
-        })
-      );
-    }
-
-    if (item.kind === "file") {
-      const download = document.createElement("a");
-      download.className = "row-action";
-      download.href = fileDownloadUrl(item, token);
-      download.textContent = t("downloadFile");
-      download.download = item.originalName || "file";
-      actions.appendChild(download);
-    }
-
-    container.appendChild(node);
-  });
+  const grid = document.createElement("div");
+  grid.className = "cards";
+  for (const item of items) grid.appendChild(buildCard(item, token));
+  container.appendChild(grid);
 }
 
 async function refreshPublicItems() {
@@ -826,283 +954,6 @@ passwordForm.addEventListener("submit", async (event) => {
   setStatus(passwordStatus, t("lookupSuccess"), "ok");
 });
 
-/* --- the colour field: Conway's Game of Life ------------------------------
-   The background is a real Game of Life running on a board 48 cells wide,
-   painted into a small canvas and stretched over the viewport. Four decisions
-   make it work as a backdrop rather than as a toy:
-
-   1. The field is drawn from heat, not from life. A live cell sets its cell to
-      full heat and a dead one loses a fixed amount each generation, so what
-      reaches the screen is a trail rather than the pattern itself. This matters
-      more than it sounds: Life settles at three to six percent alive, and at
-      that density a blurred board is a spray of unrelated dots. Trails join
-      them up, a glider draws a comet, an oscillator breathes in place, and the
-      slow drift of structure across the board becomes something you can
-      actually see. The rule underneath is untouched - B3/S23, exactly.
-
-   2. Heat picks the shade. A cell that was alive this generation takes the
-      deepest blue and one that has been cold for a while takes the palest, so
-      the range of blues is the age of the pattern made visible. One flat colour
-      would just be a blue wash.
-
-   3. The board starts sparse and is never allowed to empty. Life on a finite
-      board runs down, and an empty board is a flat background, so the
-      population is topped up whenever it falls below a floor. Only the seeding
-      is an addition; the rule stays pure.
-
-   4. Nothing is animated per frame. Generations advance on a timer and the
-      canvas is repainted once per generation.
-
-   Softening is the stylesheet's job, not this code's. `ctx.filter` is not used
-   anywhere here: applied to a magnified drawImage its radius is not honoured in
-   the units it appears to be, and a field that measures perfectly on the canvas
-   arrives on screen as faint noise. A CSS blur on the element has an
-   unambiguous radius in CSS pixels and scales with the viewport the same way
-   the cells do.
-
-   Text contrast is bounded by a single number: the canvas element's opacity in
-   the stylesheet. No cell can be more opaque than the ramp colours themselves,
-   so the worst the field can do to a panel is one known colour at one known
-   alpha. Blur only redistributes that; it cannot raise the maximum. */
-
-function startColourField() {
-  const canvas = document.getElementById("colour-field");
-  if (!canvas || typeof canvas.getContext !== "function") return;
-
-  const view = canvas.getContext("2d");
-  if (!view) return;
-
-  const sim = document.createElement("canvas");
-  const simCtx = sim.getContext("2d");
-  if (!simCtx) return;
-
-  // Heat decides the shade, deepest first. The two themes need different blues
-  // rather than different opacities: light mode needs shades dark enough to
-  // read against a pale page, dark mode needs shades light enough to read
-  // against a near-black one.
-  const RAMPS = {
-    light: [[0x12, 0x47, 0x9f], [0x21, 0x66, 0xd6], [0x3f, 0x86, 0xe8],
-            [0x6a, 0xa9, 0xf5], [0x9c, 0xcb, 0xff]],
-    dark: [[0x2f, 0x66, 0xb8], [0x3f, 0x86, 0xe8], [0x5a, 0xa0, 0xf0],
-           [0x86, 0xc4, 0xff], [0xb3, 0xdc, 0xff]]
-  };
-
-  const COLS = 48;
-  const CELL_PX = 6;           // canvas pixels per cell, before the CSS upscale
-  const STEP_MS = 520;         // one generation
-  const SEED_DENSITY = 0.30;
-  const MIN_POPULATION = 0.09;
-  // How much heat a dead cell loses per generation, out of 255. At 16 a trail
-  // lasts about sixteen generations, which at this step rate is roughly eight
-  // seconds - long enough to read as a path, short enough that the field keeps
-  // moving.
-  const COOLING = 16;
-  const OPENING_STEPS = 10;    // so the page opens on structure, not a flat seed
-  const SETTLE_STEPS = 16;     // used to compose the reduced-motion still
-
-  let cols = COLS;
-  let rows = 0;
-  let cells = null;
-  let scratch = null;
-  let heat = null;
-  let image = null;
-
-  const at = (x, y) => y * cols + x;
-
-  function ramp() {
-    return document.body.dataset.theme === "dark" ? RAMPS.dark : RAMPS.light;
-  }
-
-  function resize() {
-    const width = window.innerWidth || 1;
-    const height = window.innerHeight || 1;
-    const wanted = Math.max(12, Math.round((cols * height) / width));
-    if (wanted === rows) return;
-
-    const before = cells;
-    const beforeRows = rows;
-
-    rows = wanted;
-    cells = new Uint8Array(cols * rows);
-    scratch = new Uint8Array(cols * rows);
-    heat = new Uint8Array(cols * rows);
-
-    // Keep whatever was on screen; only a change of aspect needs a different
-    // number of rows.
-    if (before) {
-      const shared = Math.min(beforeRows, rows);
-      for (let y = 0; y < shared; y += 1) {
-        for (let x = 0; x < cols; x += 1) cells[at(x, y)] = before[at(x, y)];
-      }
-    }
-
-    sim.width = cols;
-    sim.height = rows;
-    image = simCtx.createImageData(cols, rows);
-
-    canvas.width = cols * CELL_PX;
-    canvas.height = rows * CELL_PX;
-    view.imageSmoothingEnabled = true;
-  }
-
-  function seed(density) {
-    for (let i = 0; i < cells.length; i += 1) {
-      const alive = Math.random() < density ? 1 : 0;
-      cells[i] = alive;
-      heat[i] = alive ? 255 : 0;
-    }
-  }
-
-  // Standard B3/S23 on a torus: a dead cell with exactly three live neighbours
-  // is born, a live cell with two or three survives, everything else dies.
-  function step() {
-    for (let y = 0; y < rows; y += 1) {
-      const up = (y - 1 + rows) % rows;
-      const down = (y + 1) % rows;
-      for (let x = 0; x < cols; x += 1) {
-        const left = (x - 1 + cols) % cols;
-        const right = (x + 1) % cols;
-        const neighbours =
-          cells[at(left, up)] + cells[at(x, up)] + cells[at(right, up)] +
-          cells[at(left, y)] + cells[at(right, y)] +
-          cells[at(left, down)] + cells[at(x, down)] + cells[at(right, down)];
-        const alive = cells[at(x, y)];
-        scratch[at(x, y)] = neighbours === 3 || (alive === 1 && neighbours === 2) ? 1 : 0;
-      }
-    }
-
-    const spent = cells;
-    cells = scratch;
-    scratch = spent;
-
-    let population = 0;
-    for (let i = 0; i < cells.length; i += 1) {
-      if (cells[i]) {
-        heat[i] = 255;
-        population += 1;
-      } else if (heat[i] > 0) {
-        heat[i] = heat[i] > COOLING ? heat[i] - COOLING : 0;
-      }
-    }
-
-    // An empty board is a flat background, so a run-down population is topped
-    // up. Seeding a few small patches rather than uniformly gives the new
-    // growth something to spread out from.
-    if (population < cells.length * MIN_POPULATION) {
-      for (let patch = 0; patch < 5; patch += 1) {
-        const cx = Math.floor(Math.random() * cols);
-        const cy = Math.floor(Math.random() * rows);
-        for (let dy = -1; dy <= 1; dy += 1) {
-          for (let dx = -1; dx <= 1; dx += 1) {
-            const x = (cx + dx + cols) % cols;
-            const y = (cy + dy + rows) % rows;
-            cells[at(x, y)] = Math.random() < 0.5 ? 1 : 0;
-            heat[at(x, y)] = 255;
-          }
-        }
-      }
-    }
-  }
-
-  function draw() {
-    const shades = ramp();
-    const data = image.data;
-
-    for (let i = 0; i < cells.length; i += 1) {
-      const offset = i * 4;
-      const value = heat[i];
-      if (value === 0) {
-        data[offset + 3] = 0;
-        continue;
-      }
-      // Five heat bands, hottest at the deep end. Alpha follows the heat too,
-      // so a cold trail fades out instead of ending in a hard edge.
-      const band = value > 200 ? 0 : value > 140 ? 1 : value > 80 ? 2 : value > 30 ? 3 : 4;
-      const rgb = shades[band];
-      data[offset] = rgb[0];
-      data[offset + 1] = rgb[1];
-      data[offset + 2] = rgb[2];
-      data[offset + 3] = value;
-    }
-
-    simCtx.putImageData(image, 0, 0);
-
-    view.clearRect(0, 0, canvas.width, canvas.height);
-    view.drawImage(sim, 0, 0, cols, rows, 0, 0, canvas.width, canvas.height);
-  }
-
-  function settle(steps) {
-    seed(SEED_DENSITY);
-    for (let i = 0; i < steps; i += 1) step();
-    draw();
-  }
-
-  let timer = 0;
-  let stepped = 0;
-
-  function tick(now) {
-    timer = window.requestAnimationFrame(tick);
-    if (!stepped) {
-      stepped = now;
-      return;
-    }
-    if (now - stepped < STEP_MS) return;
-    stepped = now;
-    step();
-    draw();
-  }
-
-  function start() {
-    if (timer) return;
-    stepped = 0;
-    timer = window.requestAnimationFrame(tick);
-  }
-
-  function stop() {
-    window.cancelAnimationFrame(timer);
-    timer = 0;
-  }
-
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-  window.addEventListener("resize", () => {
-    resize();
-    draw();
-  });
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) stop();
-    else if (!reducedMotion.matches) start();
-  });
-
-  if (reducedMotion.addEventListener) {
-    reducedMotion.addEventListener("change", () => {
-      if (reducedMotion.matches) {
-        stop();
-        settle(SETTLE_STEPS);
-      } else {
-        start();
-      }
-    });
-  }
-
-  // Repaint on a theme change so the ramp follows the theme even while the
-  // simulation is paused.
-  if (typeof MutationObserver === "function") {
-    new MutationObserver(draw).observe(document.body, {
-      attributes: true,
-      attributeFilter: ["data-theme"]
-    });
-  }
-
-  resize();
-  if (reducedMotion.matches) {
-    settle(SETTLE_STEPS);
-  } else {
-    settle(OPENING_STEPS);
-    start();
-  }
-}
 
 /* --- chrome --------------------------------------------------------------- */
 
@@ -1136,7 +987,6 @@ themeToggle.addEventListener("click", () => {
 });
 
 applyI18n();
-startColourField();
 setProtectedSectionVisible(false);
 renderEmpty(protectedList, t("empty"));
 

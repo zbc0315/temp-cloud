@@ -1,11 +1,11 @@
 
 /* ---------------------------------------------------------------------------
    Privacy footer and first-launch notice (injected by ugos-app/src/cmd/syncweb).
-   Styled entirely from the design tokens declared in public/styles.css, which
-   this file is appended to, so both themes and both breakpoints come for free.
+   Styled entirely from the tokens in public/styles.css, which this file is
+   appended to, so both themes and both breakpoints come for free.
    --------------------------------------------------------------------------- */
 .app-footer {
-  width: min(860px, 100% - var(--sp-7));
+  width: min(900px, 100% - var(--sp-7));
   padding: var(--sp-6) 0 var(--sp-7);
   color: var(--label-2);
   font-size: var(--fs-2);
@@ -25,8 +25,6 @@
   justify-content: center;
   padding: var(--sp-5);
   background: rgba(20, 20, 30, 0.45);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
 }
 .privacy-modal[hidden] { display: none; }
 .privacy-modal-box {
@@ -34,13 +32,11 @@
   max-height: calc(100vh - var(--sp-7));
   overflow-y: auto;
   padding: var(--sp-5);
-  border: 1px solid var(--edge);
+  border: 1px solid var(--hairline);
   border-radius: var(--r-card);
-  background: var(--glass-hi);
-  -webkit-backdrop-filter: var(--blur);
-  backdrop-filter: var(--blur);
+  background: var(--surface);
   color: var(--label);
-  box-shadow: var(--lift), var(--specular);
+  box-shadow: var(--shadow-lift);
 }
 .privacy-modal-box h2 { margin: 0 0 var(--sp-3); font-size: var(--fs-4); letter-spacing: -0.022em; }
 .privacy-modal-box p {
@@ -65,8 +61,6 @@
   font-weight: 500;
 }
 .privacy-modal-actions .primary:hover { background: #0077ed; }
-/* .pill would otherwise sit on the same tint as the box it is inside. */
-.privacy-modal-actions .pill { background: var(--raised); }
 
 @media (max-width: 720px) {
   .app-footer { width: calc(100% - var(--sp-5)); padding: var(--sp-5) 0 var(--sp-6); }

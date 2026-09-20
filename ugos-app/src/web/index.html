@@ -6,33 +6,9 @@
     <meta name="color-scheme" content="light dark" />
     <title>Temp Cloud</title>
     <link rel="icon" href="icon.png" />
-    <link rel="stylesheet" href="styles.css?v=017d321f7a69" />
+    <link rel="stylesheet" href="styles.css?v=e4eeccb91f58" />
   </head>
   <body>
-    <!-- The colour field the glass refracts: Conway's Game of Life, drawn by
-         the page script into a small canvas and stretched over the viewport.
-         The .field base gradient behind it is the no-JS fallback. -->
-    <div class="field" aria-hidden="true">
-      <canvas id="colour-field" class="field-canvas"></canvas>
-    </div>
-
-    <header class="bar">
-      <div class="bar-inner">
-        <div class="brand">
-          <span class="brand-mark" aria-hidden="true"></span>
-          <span class="brand-name">Temp Cloud</span>
-          <span class="brand-status">
-            <i class="dot" aria-hidden="true"></i>
-            <span data-i18n="brandStatus">到期自动清理</span>
-          </span>
-        </div>
-        <div class="bar-actions">
-          <button type="button" id="language-toggle" class="pill">EN</button>
-          <button type="button" id="theme-toggle" class="pill" data-i18n="themeToDark">深色</button>
-        </div>
-      </div>
-    </header>
-
     <main class="app">
       <!-- ============ one composer: text, image and file share one box ===== -->
       <section class="sheet" aria-labelledby="composer-title">
@@ -162,7 +138,7 @@
         </div>
       </section>
 
-      <!-- ============ public list ========================================= -->
+      <!-- ============ public content ======================================= -->
       <section class="list" aria-labelledby="public-title">
         <div class="list-head">
           <h2 id="public-title" data-i18n="publicSectionTitle">无密码内容</h2>
@@ -170,17 +146,23 @@
         </div>
         <div id="public-list"></div>
       </section>
+
+      <!-- There is no header on purpose, but the two view switches still have
+           to live somewhere; they sit quietly under the content. -->
+      <div class="toggles">
+        <button type="button" id="language-toggle" class="pill">EN</button>
+        <button type="button" id="theme-toggle" class="pill" data-i18n="themeToDark">深色</button>
+      </div>
     </main>
 
     <template id="item-template">
-      <article class="row">
-        <span class="row-kind"></span>
-        <div class="row-main">
-          <h3 class="row-title"></h3>
-          <p class="row-meta"></p>
+      <article class="card">
+        <div class="card-media"></div>
+        <div class="card-body">
+          <h3 class="card-title"></h3>
+          <p class="card-meta"></p>
         </div>
-        <span class="row-expire"></span>
-        <div class="row-actions"></div>
+        <div class="card-actions"></div>
       </article>
     </template>
 
@@ -189,6 +171,6 @@
       <div class="privacy-modal-box" role="dialog" aria-modal="true"></div>
     </div>
 
-    <script src="app.js?v=233e59c3496e"></script>
+    <script src="app.js?v=1824c233c5a7"></script>
   </body>
 </html>
