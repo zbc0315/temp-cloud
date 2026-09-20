@@ -1,0 +1,13 @@
+{
+  "id": "com.zbc0315.tempcloud",
+  "name": "temp-cloud",
+  "author": "zbc0315",
+  "description": "Temp Cloud / 临时云",
+  "supportLanguages": ["en-US", "zh-CN"],
+
+  "windowConfig": {
+    "allow": ["display-capture", "clipboard-write"]
+  },
+
+  "contextMenu": []
+}
