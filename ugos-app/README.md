@@ -71,7 +71,7 @@ temp-cloud/                     # 仓库根目录（原 Node.js 项目）
 | 能力 | 实现 |
 |---|---|
 | HTTP 服务 | `net/http`，`GET /api/config`、`/healthz`、`/api/items/public`、`POST /api/items`、`POST /api/access`、`GET /api/items/{id}/content`、`GET /api/files/{id}` |
-| 文件上传 | `r.ParseMultipartForm` + `http.MaxBytesReader`，上限 100 MiB（与 multer 一致） |
+| 文件上传 | **流式解析**（`r.MultipartReader` + `io.Copy`）+ `http.MaxBytesReader`，上限 100 MiB（与 multer 一致）。刻意不用 `ParseMultipartForm`，理由见 7.2 |
 | 文本 / 图片 | 文本存 `items.json`；图片存盘并在读取时转 data URL |
 | 密码访问 | 密码 SHA-256 后比对，命中后签发 32 位十六进制 token，有效期 24 小时 |
 | 过期清理 | 启动时执行一次，之后每 60 秒扫一次；过期条目连同其上传文件一并删除 |
@@ -150,7 +150,11 @@ ugcli pack --arch amd64 --build 2
 
 > 同一 `x.y.z` 下构建号必须递增，不许重复。
 
-## 7. ⚠️ 关键坑：UGOS 的 GODEBUG 与新版本 Go 冲突
+## 7. ⚠️ 两个平台坑
+
+这两个坑都只有在真实设备上才能发现，且都不会在本地开发时暴露。
+
+### 7.1 启动失败：GODEBUG 与新版本 Go 冲突
 
 UGOS Pro 在 `/etc/systemd/system.conf` 里设置了：
 
@@ -173,6 +177,46 @@ fatal error: removed GODEBUG "tlskyber" set to old value "0" in environment
 > 排查过程中确认过的其他路径（都已否决）：
 > - 单元里的 `EnvironmentFile=-.../init.d/{appid}.env` **无法**覆盖 manager 的 `DefaultEnvironment`（实测无效）；
 > - systemd drop-in 的 `Environment=` **可以**覆盖（实测有效），但那是系统级改动，**无法随 UPK 分发**。
+
+### 7.2 大文件上传失败：只读沙箱里没有临时目录
+
+`ParseMultipartForm` 会把超过内存阈值的 part 溢写到**临时文件**，走的是 `os.TempDir()`，也就是 `/tmp`。而 UGOS 给应用生成的 systemd 单元是这样的：
+
+```ini
+TemporaryFileSystem=/:ro
+BindReadOnlyPaths=/lib
+BindPaths=/var/packages/{appid}/data
+BindPaths=/var/packages/{appid}/cache
+BindPaths=/var/packages/{appid}/log
+```
+
+整个根文件系统是只读 tmpfs，只有 `data` / `cache` / `log` 被显式挂成可写。**`/tmp` 不可写**，于是任何超过内存阈值的 multipart 解析都会失败，接口返回 400。
+
+症状很容易误判 —— 表面上像是"网关限制了上传大小"，实际上后端直连也一样失败：
+
+```
+16 MB 直连 -> 201
+19 MB 直连 -> 400     ← 后端自己的 bug，与网关无关
+```
+
+**正确修法不是去找临时目录，而是根本不产生临时文件。** `handleCreateItem` 改用 `r.MultipartReader()` 逐 part 流式处理，文件 part 直接 `io.Copy` 到 `uploads/` 下的最终路径：
+
+- 不需要临时文件，因此在只读沙箱里正常工作；
+- 内存占用与文件大小无关，100 MB 上传也只占常量内存；
+- 少一次完整的磁盘写入（不再有"写临时文件 → 再搬走"）。
+
+修复后实测：直连 19 / 21 / 60 / **100 MB** 全部 201，往返 SHA-256 一致。
+
+### 7.3 结论：网关 20 MB、直连 100 MB
+
+应用自身接受 100 MB，但 UGOS 网关（nginx）的 http 级 `client_max_body_size 20m` **不会**被第三方应用的 server 块覆盖（内置应用如 filemgr/vault 各自覆盖为 `0`，第三方模板不生成该指令）。因此：
+
+| 访问方式 | 上传上限 |
+|---|---|
+| 经 UGOS 网关（桌面窗口，`:10003` / `:10004`） | **约 20 MB** |
+| 直连后端端口（`:21039`） | **100 MB**（应用自身上限） |
+
+前端对 413 / 500 做了专门处理，会给出可操作的提示（告知改用直连地址），而不是显示 nginx 的 413 HTML 页面。这是平台约束，无法通过 UPK 修复。
 
 ## 8. 安装与卸载
 
@@ -212,6 +256,11 @@ sudo /usr/sbin/ugprerm -id com.zbc0315.tempcloud -workflow 3
 | Web UI / app.js / styles.css | 全 200 |
 | 跨机（Windows → NAS）上传 1 MiB | 成功 |
 | 下载回环 SHA-256 | **完全一致** |
+| **直连大文件阶梯 19 / 21 / 60 / 100 MB** | **全部 201，往返 SHA-256 一致** |
+| **经网关阶梯 5 / 15 / 17 MB** | 201 |
+| 经网关 21 MB | 413（平台限制，见 7.3；前端给出可操作提示） |
+| Windows 经局域网访问网关 10003 / 10004 | 200 |
+| 经网关完整上传→下载往返 | SHA-256 **一致** |
 | 无密码访问受保护内容 | 403 |
 | 正确密码换 token 后读取 | 200 + 正确内容 |
 | 公开列表是否泄露受保护内容 | 否 |
@@ -220,6 +269,12 @@ sudo /usr/sbin/ugprerm -id com.zbc0315.tempcloud -workflow 3
 
 ## 10. 已知事项
 
+- **经网关上传上限约 20 MB**：平台约束（nginx `client_max_body_size`），无法通过 UPK 修复。大文件请用直连地址 `http://<NAS-IP>:21039/`，该路径支持应用自身的 100 MB 上限。详见 7.3。
+- **桌面快捷方式**：`uginstall` 命令行安装**不会**创建系统桌面图标（该条目由 App Center 界面创建）。命令行安装后可手工补一个与系统约定一致的空标记文件：
+  ```bash
+  sudo touch /ugreen/.config/.nas/<uid>/desktop/<appid>.ugreenapp
+  ```
+  通过 App Center 图形界面安装则无需此步。重装应用不会删除该文件。
 - **应用注册与固定**：UPK 内的 `config.json` 已声明 `proxy: [{location: api, target: 21039}]`，网关会把 `/api/` 前缀转发到后端。若在系统桌面点开图标后发现前端请求未走网关，可直接用 `http://<NAS-IP>:21039/` 访问——后端内嵌了完整 UI，两种方式都可用。
 - **端口 21039** 为自选值（官方示例使用 21010 / 29090）。如与设备上其他服务冲突，改 `project.yaml` 的 `port` 与 `start_cmd` 后重新打包。
 - **`depend_fw_version`** 填的是官方示例值 `1.13.0.0000`。文档建议向绿联确认有效固件版本号后再调整。

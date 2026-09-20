@@ -44,7 +44,8 @@ const (
 	defaultExpireHours = 1
 	maxExpireHours     = 24
 	maxUploadBytes     = 100 << 20 // 100 MiB, matches the original multer limit
-	maxMultipartMemory = 16 << 20
+	maxMultipartMemory = 16 << 20  // slack added to the request body limit
+	maxFieldBytes      = 20 << 20  // matches the original express.json({limit:"20mb"})
 	accessTokenTTL     = 24 * time.Hour
 	cleanupInterval    = time.Minute
 	shutdownGrace      = 10 * time.Second
@@ -341,6 +342,7 @@ func (s *server) handleConfig(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]int{
 		"defaultExpireHours": defaultExpireHours,
 		"maxExpireHours":     maxExpireHours,
+		"maxUploadBytes":     maxUploadBytes,
 	})
 }
 
@@ -378,25 +380,127 @@ func (s *server) handleAccess(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// savedFile describes an upload that has already been streamed to disk.
+type savedFile struct {
+	storedName   string
+	originalName string
+	mimeType     string
+	size         int64
+}
+
+// resolveMimeType picks the most useful content type for an upload.
+func resolveMimeType(declared, filename string) string {
+	if declared != "" {
+		return declared
+	}
+	if byExt := mime.TypeByExtension(filepath.Ext(filename)); byExt != "" {
+		return byExt
+	}
+	return "application/octet-stream"
+}
+
+// handleCreateItem accepts a multipart form and streams the file part directly
+// to the uploads directory.
+//
+// ParseMultipartForm is deliberately avoided. It spills any part larger than
+// its in-memory threshold to a temporary file, and the UGOS Pro systemd sandbox
+// mounts the root filesystem read-only, so /tmp cannot be written and uploads
+// above that threshold fail outright. Streaming removes the temporary-file
+// requirement and keeps memory flat regardless of upload size.
 func (s *server) handleCreateItem(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxUploadBytes+maxMultipartMemory)
 
-	if err := r.ParseMultipartForm(maxMultipartMemory); err != nil {
-		writeError(w, http.StatusBadRequest, "上传内容过大或格式不正确")
+	reader, err := r.MultipartReader()
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "上传格式不正确")
 		return
 	}
-	defer func() {
-		if r.MultipartForm != nil {
-			if err := r.MultipartForm.RemoveAll(); err != nil {
-				log.Printf("warning: could not clean multipart temp files: %v", err)
-			}
-		}
-	}()
 
-	kind := strings.TrimSpace(r.FormValue("kind"))
-	password := r.FormValue("password")
-	title := strings.TrimSpace(r.FormValue("title"))
-	expiresHours := sanitizeHours(r.FormValue("expiresHours"))
+	fields := make(map[string]string)
+	var uploaded *savedFile
+
+	// discard removes a partially written upload before reporting a failure.
+	discard := func() {
+		if uploaded != nil {
+			_ = os.Remove(filepath.Join(s.store.dir, "uploads", uploaded.storedName))
+		}
+	}
+	tooLarge := func() {
+		discard()
+		writeError(w, http.StatusRequestEntityTooLarge, "上传内容超过 100 MB 上限")
+	}
+
+	for {
+		part, err := reader.NextPart()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			var maxErr *http.MaxBytesError
+			if errors.As(err, &maxErr) {
+				tooLarge()
+				return
+			}
+			discard()
+			writeError(w, http.StatusBadRequest, "上传内容读取失败")
+			return
+		}
+
+		name := part.FormName()
+		if name != "file" {
+			value, readErr := io.ReadAll(io.LimitReader(part, maxFieldBytes+1))
+			part.Close()
+			if readErr != nil {
+				discard()
+				writeError(w, http.StatusBadRequest, "上传内容读取失败")
+				return
+			}
+			if int64(len(value)) > maxFieldBytes {
+				discard()
+				writeError(w, http.StatusRequestEntityTooLarge, "表单字段超过 20 MB 上限")
+				return
+			}
+			fields[name] = string(value)
+			continue
+		}
+
+		if uploaded != nil {
+			part.Close()
+			discard()
+			writeError(w, http.StatusBadRequest, "一次只能上传一个文件")
+			return
+		}
+
+		original := filepath.Base(part.FileName())
+		stored := fmt.Sprintf("%d-%s%s", time.Now().UnixMilli(), newID(), filepath.Ext(original))
+		dest := filepath.Join(s.store.dir, "uploads", stored)
+
+		written, copyErr := copyToFile(dest, part)
+		declared := part.Header.Get("Content-Type")
+		part.Close()
+		if copyErr != nil {
+			_ = os.Remove(dest)
+			var maxErr *http.MaxBytesError
+			if errors.As(copyErr, &maxErr) {
+				tooLarge()
+				return
+			}
+			writeError(w, http.StatusInternalServerError, "保存文件失败")
+			return
+		}
+
+		uploaded = &savedFile{
+			storedName:   stored,
+			originalName: original,
+			mimeType:     resolveMimeType(declared, original),
+			size:         written,
+		}
+	}
+
+	kind := strings.TrimSpace(fields["kind"])
+	password := fields["password"]
+	title := strings.TrimSpace(fields["title"])
+	expiresHours := sanitizeHours(fields["expiresHours"])
 
 	now := time.Now().UTC()
 	base := item{
@@ -411,8 +515,9 @@ func (s *server) handleCreateItem(w http.ResponseWriter, r *http.Request) {
 
 	switch kind {
 	case "text":
-		text := r.FormValue("text")
+		text := fields["text"]
 		if strings.TrimSpace(text) == "" {
+			discard()
 			writeError(w, http.StatusBadRequest, "文本内容不能为空")
 			return
 		}
@@ -420,50 +525,27 @@ func (s *server) handleCreateItem(w http.ResponseWriter, r *http.Request) {
 		base.Text = text
 
 	case "image", "file":
-		file, header, err := r.FormFile("file")
-		if err != nil {
+		if uploaded == nil {
 			writeError(w, http.StatusBadRequest, "请上传文件")
 			return
 		}
-		defer file.Close()
-
-		mimeType := header.Header.Get("Content-Type")
-		if mimeType == "" {
-			mimeType = mime.TypeByExtension(filepath.Ext(header.Filename))
+		base.Kind = "file"
+		if kind == "image" || strings.HasPrefix(uploaded.mimeType, "image/") {
+			base.Kind = "image"
 		}
-		if mimeType == "" {
-			mimeType = "application/octet-stream"
-		}
-
-		stored := fmt.Sprintf("%d-%s%s", time.Now().UnixMilli(), newID(), filepath.Ext(header.Filename))
-		dest := filepath.Join(s.store.dir, "uploads", stored)
-
-		written, err := copyToFile(dest, file)
-		if err != nil {
-			_ = os.Remove(dest)
-			writeError(w, http.StatusInternalServerError, "保存文件失败")
-			return
-		}
-
-		resolved := "file"
-		if kind == "image" || strings.HasPrefix(mimeType, "image/") {
-			resolved = "image"
-		}
-		base.Kind = resolved
-		base.MimeType = mimeType
-		base.OriginalName = filepath.Base(header.Filename)
-		base.Size = written
-		base.StoredName = stored
+		base.MimeType = uploaded.mimeType
+		base.OriginalName = uploaded.originalName
+		base.Size = uploaded.size
+		base.StoredName = uploaded.storedName
 
 	default:
+		discard()
 		writeError(w, http.StatusBadRequest, "无效的内容类型")
 		return
 	}
 
 	if err := s.store.add(base); err != nil {
-		if base.StoredName != "" {
-			_ = os.Remove(filepath.Join(s.store.dir, "uploads", base.StoredName))
-		}
+		discard()
 		writeError(w, http.StatusInternalServerError, "保存失败")
 		return
 	}
