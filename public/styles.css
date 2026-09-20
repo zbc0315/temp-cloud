@@ -117,10 +117,12 @@ body {
 
    The out side is a fixed width rather than a share of the row, so widening the
    page makes the composer wider and leaves the thumbnails exactly as they were.
-   350px is two 167px cards and the gap between them. Below 860px the two stack,
+   The 365px is 350px of content - two 167px cards and the gap - plus the 15px
+   the scroll pane reserves for its scrollbar, so the thumbnails stay 167px
+   rather than shrinking by a scrollbar's width. Below 860px the two stack,
    which is about where the columns would start to crowd. */
 .layout {
-  --out-width: 350px;
+  --out-width: 365px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--out-width);
   gap: var(--sp-5);
@@ -516,6 +518,39 @@ body[data-theme="dark"] .field-text select {
   outline: 2px solid var(--accent-deep);
   outline-offset: 2px;
   box-shadow: var(--focus);
+}
+
+/* --- two independent panes ----------------------------------------------
+   On a wide screen the page itself does not scroll. Each column scrolls its own
+   content, so running down a long list of thumbnails leaves the composer exactly
+   where it is - which is the point of putting them side by side at all.
+
+   Below 860px the columns stack and the page scrolls normally again: two nested
+   scrollers on a phone is a worse experience than one, and there is nothing to
+   keep still once the columns are on top of each other.
+
+   `scrollbar-gutter: stable` reserves the bar's width up front, so the cards do
+   not shift sideways the moment the list grows past the fold. */
+@media (min-width: 861px) {
+  /* `auto` rather than `hidden`: on a very short window the footer and the
+     switches stop leaving the columns any room, and a clipped layout with no
+     way to reach the rest of it is worse than a page scrollbar. In normal use
+     nothing overflows and no page scrollbar ever appears. */
+  body { height: 100vh; overflow: auto; }
+  .app {
+    display: flex; flex-direction: column;
+    min-height: 360px;            /* so the columns cannot be squeezed away */
+    padding-top: var(--sp-6);
+  }
+  .layout { flex: 1; min-height: 0; align-items: stretch; }
+  .column { min-height: 0; }
+  .column-upload { overflow-y: auto; }
+  .column-download {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  .toggles { flex: none; }
 }
 
 /* --- mobile -------------------------------------------------------------- */
