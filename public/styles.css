@@ -53,6 +53,11 @@
   --r-field: 10px;
   --r-pill:  999px;
 
+  /* The width a scroll pane reserves for its bar. Stated once because two
+     things depend on it: the scrollbar's own width, and the pinned width of the
+     out column, which has to leave room for it or the thumbnails shrink. */
+  --scrollbar: 10px;
+
   --glow:  0 0 0 4px rgba(0, 113, 227, 0.16);
   --focus: 0 0 0 3px rgba(0, 113, 227, 0.55);
 }
@@ -117,12 +122,12 @@ body {
 
    The out side is a fixed width rather than a share of the row, so widening the
    page makes the composer wider and leaves the thumbnails exactly as they were.
-   The 365px is 350px of content - two 167px cards and the gap - plus the 15px
-   the scroll pane reserves for its scrollbar, so the thumbnails stay 167px
-   rather than shrinking by a scrollbar's width. Below 860px the two stack,
-   which is about where the columns would start to crowd. */
+   350px of content - two 167px cards and the gap - plus whatever the scroll pane
+   reserves for its bar, so the thumbnails stay 167px instead of shrinking by a
+   scrollbar's width. Below 860px the two stack, which is about where the
+   columns would start to crowd. */
 .layout {
-  --out-width: 365px;
+  --out-width: calc(350px + var(--scrollbar));
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--out-width);
   gap: var(--sp-5);
@@ -530,6 +535,49 @@ body[data-theme="dark"] .field-text select {
   outline: 2px solid var(--accent-deep);
   outline-offset: 2px;
   box-shadow: var(--focus);
+}
+
+/* --- scrollbars ----------------------------------------------------------
+   A thin inset pill with no track and no stepper arrows, which is as close as
+   CSS gets to the overlay scrollbar macOS shows: the visible bar is 4px, but it
+   sits inside a 10px hit area. The 3px transparent border with
+   `background-clip: content-box` is what separates those two numbers.
+
+   The standard `scrollbar-width`/`scrollbar-color` are deliberately NOT set
+   alongside the webkit pseudo-elements: in Chromium, specifying either one
+   disables `::-webkit-scrollbar` for that element, and the standard properties
+   cannot round the thumb or inset it. They are set only where the pseudo-element
+   is not a valid selector, which is Firefox. */
+::-webkit-scrollbar { width: var(--scrollbar); height: var(--scrollbar); }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  /* 0.42 rather than 0.32: over the light page a 0.32 thumb composites to
+     (184,184,189), which is 1.54:1 against #f2f2f7 and reads as no scrollbar at
+     all. 0.42 is 1.89:1 - present without becoming the default Windows bar,
+     which is what this is replacing. Dark mode needs no such help: the same
+     alpha over #000 composites to (75,75,78). */
+  background-color: rgba(60, 60, 67, 0.42);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: var(--r-pill);
+}
+::-webkit-scrollbar-thumb:hover { background-color: rgba(60, 60, 67, 0.62); }
+::-webkit-scrollbar-corner { background: transparent; }
+body[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background-color: rgba(235, 235, 245, 0.32);
+}
+body[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(235, 235, 245, 0.55);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(60, 60, 67, 0.42) transparent;
+  }
+  body[data-theme="dark"] * {
+    scrollbar-color: rgba(235, 235, 245, 0.32) transparent;
+  }
 }
 
 /* --- two independent panes ----------------------------------------------
