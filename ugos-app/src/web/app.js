@@ -24,6 +24,10 @@ const messages = {
     emptyComposer: "请先输入文字，或添加一个文件、一张图片",
     bothKinds: "一次只能保存一种内容：请移除附件，或清空上面的文字",
     hourUnit: "{count} 小时",
+    minuteUnit: "{count} 分钟",
+    remaining: "剩余 {time}",
+    expired: "已过期",
+    lessThanMinute: "不到 1 分钟",
 
     attachImage: "图片",
     attachFile: "文件",
@@ -65,7 +69,7 @@ const messages = {
     itemCreated: "创建 {time}",
 
     copyText: "复制",
-    copyImage: "复制图片",
+    copyImage: "复制",
     downloadFile: "下载",
     downloadImage: "下载",
     copiedText: "已复制到剪贴板",
@@ -98,6 +102,10 @@ const messages = {
     emptyComposer: "Type something, or add a file or an image first",
     bothKinds: "One item at a time: remove the attachment, or clear the text above",
     hourUnit: "{count} hour(s)",
+    minuteUnit: "{count} min",
+    remaining: "{time} left",
+    expired: "Expired",
+    lessThanMinute: "under a minute",
 
     attachImage: "Image",
     attachFile: "File",
@@ -140,7 +148,7 @@ const messages = {
     itemCreated: "Created {time}",
 
     copyText: "Copy",
-    copyImage: "Copy image",
+    copyImage: "Copy",
     downloadFile: "Download",
     downloadImage: "Download",
     copiedText: "Copied to clipboard",
@@ -734,6 +742,52 @@ function itemTitle(item) {
   return item.originalName || t("itemUntitled");
 }
 
+/* --- remaining time -------------------------------------------------------
+   Every item knows when it was created and when it expires, so how much of its
+   life is left is just arithmetic. Two things come out of it: a fraction, which
+   drives the bar under the picture, and a short phrase for the line beneath it.
+   The bar carries the answer at a glance and the phrase carries the number, so
+   neither has to do the other's job. */
+function lifeFraction(expiresAt, createdAt) {
+  const created = new Date(createdAt).getTime();
+  const expires = new Date(expiresAt).getTime();
+  const span = expires - created;
+  if (!(span > 0)) return 0;
+  return Math.min(1, Math.max(0, (expires - Date.now()) / span));
+}
+
+// Deliberately coarse: this sits on one line in a small card, so "2 小时"
+// beats "1 小时 47 分". The exact expiry is one hover away.
+function formatRemaining(expiresAt) {
+  const left = new Date(expiresAt).getTime() - Date.now();
+  if (!isFinite(left)) return "";
+  if (left <= 0) return t("expired");
+  const minutes = Math.floor(left / 60000);
+  if (minutes < 1) return t("lessThanMinute");
+  if (minutes < 60) return t("minuteUnit", { count: minutes });
+  return t("hourUnit", { count: Math.floor(minutes / 60) });
+}
+
+// The two elements are rebuilt from their own data attributes so a single
+// interval can keep every card on the page counting down without re-rendering
+// or re-fetching anything.
+function applyLife(fill, remaining) {
+  const fraction = lifeFraction(fill.dataset.expires, fill.dataset.created);
+  const low = fraction <= 0.2;
+  fill.style.width = (fraction * 100).toFixed(2) + "%";
+  fill.classList.toggle("is-low", low);
+  if (remaining) {
+    remaining.textContent = t("remaining", { time: formatRemaining(fill.dataset.expires) });
+    remaining.classList.toggle("is-low", low);
+  }
+}
+
+function refreshCountdowns() {
+  document.querySelectorAll(".card-life-fill").forEach((fill) => {
+    applyLife(fill, fill.closest(".card")?.querySelector(".card-remaining"));
+  });
+}
+
 /* --- file type ------------------------------------------------------------
    Type is told apart by glyph shape rather than by colour. One accent for
    every icon keeps the palette down to a single hue, and shape is what a
@@ -814,7 +868,7 @@ function iconMarkup(kind) {
     body + "</svg>";
 }
 
-const TEXT_PREVIEW_LIMIT = 600;
+const TEXT_PREVIEW_LIMIT = 400;
 
 // What goes in the well at the top of a card. The three kinds carry very
 // different things: an image wants to show itself, a text snippet wants to show
@@ -872,9 +926,21 @@ function downloadLink(item, token, label) {
 
 function buildCard(item, token) {
   const node = itemTemplate.content.firstElementChild.cloneNode(true);
+
   node.querySelector(".card-media").replaceWith(cardMedia(item, token));
   node.querySelector(".card-title").textContent = itemTitle(item);
-  node.querySelector(".card-meta").textContent = [
+
+  const fill = node.querySelector(".card-life-fill");
+  fill.dataset.expires = item.expiresAt;
+  fill.dataset.created = item.createdAt;
+  applyLife(fill, node.querySelector(".card-remaining"));
+
+  const size = node.querySelector(".card-size");
+  size.textContent = item.size ? " · " + formatSize(item.size) : "";
+
+  // Everything that did not fit on a small card, on the card's own tooltip.
+  node.title = [
+    itemTitle(item),
     kindLabel(item.kind),
     item.size ? formatSize(item.size) : "",
     t("itemExpire", { time: formatTime(item.expiresAt) })
@@ -1018,6 +1084,10 @@ themeToggle.addEventListener("click", () => {
 applyI18n();
 setProtectedSectionVisible(false);
 renderEmpty(protectedList, t("empty"));
+
+// Every card states how much of its life is left, so the page keeps those
+// numbers and bars honest for as long as it stays open.
+window.setInterval(refreshCountdowns, 30000);
 
 loadConfig()
   .then(refreshPublicItems)

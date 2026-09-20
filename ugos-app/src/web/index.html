@@ -6,7 +6,7 @@
     <meta name="color-scheme" content="light dark" />
     <title>Temp Cloud</title>
     <link rel="icon" href="icon.png" />
-    <link rel="stylesheet" href="styles.css?v=e4eeccb91f58" />
+    <link rel="stylesheet" href="styles.css?v=17a51489a516" />
   </head>
   <body>
     <main class="app">
@@ -158,9 +158,13 @@
     <template id="item-template">
       <article class="card">
         <div class="card-media"></div>
+        <div class="card-life"><span class="card-life-fill"></span></div>
         <div class="card-body">
           <h3 class="card-title"></h3>
-          <p class="card-meta"></p>
+          <p class="card-meta">
+            <span class="card-remaining"></span>
+            <span class="card-size"></span>
+          </p>
         </div>
         <div class="card-actions"></div>
       </article>
@@ -171,6 +175,6 @@
       <div class="privacy-modal-box" role="dialog" aria-modal="true"></div>
     </div>
 
-    <script src="app.js?v=1824c233c5a7"></script>
+    <script src="app.js?v=13ef7de79870"></script>
   </body>
 </html>

@@ -334,10 +334,15 @@ body[data-theme="dark"] .field-text select {
    Cards rather than rows because the three kinds carry very different things:
    an image wants to show itself, a text snippet wants to show its words, and a
    file has nothing to show but its type. A uniform media well on top gives all
-   three the same shape in the grid. */
+   three the same shape in the grid.
+
+   Sized as thumbnails, not as panels. At 900px across the column this lays out
+   five to a row at roughly 167x183, which is a third of the area the previous
+   card took - enough cards on screen at once to see what is there, and small
+   enough that the picture, not the chrome, is what you look at. */
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: var(--sp-4);
 }
 
@@ -353,62 +358,87 @@ body[data-theme="dark"] .field-text select {
 .card:hover { box-shadow: var(--shadow-lift); transform: translateY(-1px); }
 
 .card-media {
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 16 / 9;
   display: grid; place-items: center;
   background: var(--surface-2);
-  border-bottom: 1px solid var(--hairline);
   overflow: hidden;
 }
 .card-media img {
   width: 100%; height: 100%;
   object-fit: cover; display: block;
 }
-/* The icon is one colour: type is told apart by glyph shape, not by hue. It is
-   the only content a file card's well has, so it is sized to carry it. */
-.card-icon { width: 60px; height: 60px; color: var(--accent-deep); }
+/* The icon is one colour: type is told apart by glyph shape, not by hue. */
+.card-icon { width: 34px; height: 34px; color: var(--accent-deep); }
 .card-icon path,
 .card-icon rect,
 .card-icon circle { vector-effect: non-scaling-stroke; }
 
 .card-text {
   margin: 0;
-  padding: var(--sp-3) var(--sp-4);
-  font-size: var(--fs-2);
-  line-height: 1.6;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-1);
+  line-height: 1.55;
   color: var(--label);
   white-space: pre-wrap;
   word-break: break-word;
   align-self: stretch;
   /* Preview, not the whole thing: the copy button is how you get all of it. */
   display: -webkit-box;
-  -webkit-line-clamp: 5;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 .card-media-error {
-  margin: 0; padding: var(--sp-3);
+  margin: 0; padding: var(--sp-2);
   font-size: var(--fs-1); color: var(--label-2); text-align: center;
 }
 
-.card-body { padding: var(--sp-3) var(--sp-4) 0; min-width: 0; }
+/* --- how much life is left ----------------------------------------------
+   A bar whose length is the fraction of the retention window still to run, and
+   the same fact as a phrase underneath. The bar is the glance, the phrase is
+   the number; neither has to do the other's job.
+
+   Only two colours are involved: the accent, and the danger red that already
+   exists for errors. Under a fifth of the window the bar turns, which is the
+   one piece of colour on the page that carries information rather than
+   decoration. */
+.card-life {
+  height: 4px; flex: none;
+  background: var(--fill);
+}
+.card-life-fill {
+  display: block; height: 100%; width: 100%;
+  background: var(--accent);
+}
+.card-life-fill.is-low { background: var(--danger); }
+
+/* Line heights are tighter than the page default. At this density every pixel
+   of height is a pixel of card, and 1.47 was set for prose, not for a caption
+   under a thumbnail. */
+.card-body { padding: var(--sp-2) var(--sp-3) 0; min-width: 0; }
 .card-title {
-  margin: 0; font-size: var(--fs-2); font-weight: 600;
+  margin: 0; font-size: var(--fs-2); font-weight: 600; line-height: 1.3;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.card-meta { margin: var(--sp-1) 0 0; font-size: var(--fs-1); color: var(--label-2); }
+.card-meta {
+  margin: var(--sp-1) 0 0; font-size: var(--fs-1); color: var(--label-2);
+  line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.card-remaining.is-low { color: var(--danger); }
 
 .card-actions {
   display: flex; flex-wrap: wrap; gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  padding: var(--sp-1) var(--sp-3) var(--sp-2);
   margin-top: auto;
 }
 
 .card-action {
   display: inline-flex; align-items: center; justify-content: center;
-  font: inherit; font-size: var(--fs-2); font-weight: 500; min-height: 36px;
+  font: inherit; font-size: var(--fs-1); font-weight: 500; min-height: 28px;
   color: var(--accent-deep); background: var(--fill);
   border: 1px solid transparent; border-radius: var(--r-pill);
-  padding: var(--sp-1) var(--sp-4);
+  padding: var(--sp-1) var(--sp-3);
   cursor: pointer; white-space: nowrap; text-decoration: none;
   transition: background .15s;
 }
@@ -470,7 +500,8 @@ body[data-theme="dark"] .field-text select {
   .options { grid-template-columns: 1fr; }
   .lookup-form { flex-wrap: wrap; }
   .lookup-form button { width: 100%; }
-  .cards { grid-template-columns: 1fr; }
+  /* The card grid is left to auto-fill: at 390px it settles on two columns,
+     which is what a thumbnail grid should do on a phone. */
   .toggles { margin-top: var(--sp-6); }
 }
 
