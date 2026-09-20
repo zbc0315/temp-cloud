@@ -7,9 +7,8 @@ point is not guaranteed to be the root. This script:
   1. copies `public/*` from the upstream Node.js project into `src/web/`, then
   2. rewrites absolute references (`/app.js`, `/api/...`) to be resolved against
      the directory the application was mounted at, and
-  3. makes the Google Fonts stylesheet non-blocking, because a NAS commonly sits
-     on a LAN without internet access and a render-blocking remote stylesheet
-     would stall the first paint.
+  3. removes the Google Fonts dependency, so the UI makes no third-party request
+     and works on a LAN with no internet access (styles.css uses a system stack).
 
 Run it whenever the upstream frontend changes:
 
@@ -108,18 +107,45 @@ def seed() -> None:
 def patch_html() -> None:
     path = WEB / "index.html"
     html = path.read_text(encoding="utf-8")
+    before = len(html)
 
     html = html.replace('href="/styles.css"', 'href="styles.css"')
     html = html.replace('src="/app.js"', 'src="app.js"')
 
-    html, n = re.subn(
-        r'(<link\s+href="https://fonts\.googleapis\.com[^>]*?rel="stylesheet")\s*/>',
-        lambda m: m.group(1) + ' media="print" onload="this.media=\'all\'" />',
+    # Drop the Google Fonts dependency entirely.
+    #
+    # The upstream project loads the Manrope webfont from Google. A NAS
+    # application is expected to run on a LAN that may have no internet access
+    # at all, and a tool whose whole point is keeping data on the local network
+    # should not make a third-party request (DNS, TLS, CSS, then font files) on
+    # every page load. styles.css falls back to a system font stack instead.
+    html = re.sub(
+        r'[ \t]*<link\b[^>]*(?:fonts\.googleapis\.com|fonts\.gstatic\.com)[^>]*>[ \t]*\r?\n?',
+        "",
         html,
-        flags=re.S,
     )
-    print(f"index.html: relative assets, fonts non-blocking (links patched: {n})")
+
     path.write_text(html, encoding="utf-8")
+    print(f"index.html: relative assets, Google Fonts links removed ({before - len(html)} bytes)")
+
+
+def patch_css() -> None:
+    path = WEB / "styles.css"
+    css = path.read_text(encoding="utf-8")
+
+    old = 'font-family: "Manrope", sans-serif;'
+    if old not in css:
+        sys.exit("styles.css: Manrope font-family declaration not found")
+
+    # A system stack that keeps the geometric-sans look on every platform, and
+    # covers the CJK glyphs the bilingual UI needs (the UI ships zh + en).
+    new = (
+        "font-family: system-ui, -apple-system, \"Segoe UI\", Roboto,\n"
+        "    \"Helvetica Neue\", Arial, \"PingFang SC\", \"Hiragino Sans GB\",\n"
+        "    \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif;"
+    )
+    path.write_text(css.replace(old, new), encoding="utf-8")
+    print("styles.css: system font stack replaces the remote Manrope webfont")
 
 
 def patch_js() -> None:
@@ -142,21 +168,28 @@ def patch_js() -> None:
 
 
 def report_leftovers() -> None:
-    leftover = []
+    leftovers = []
     for f in sorted(WEB.iterdir()):
         if f.suffix not in {".js", ".html", ".css"}:
             continue
         text = f.read_text(encoding="utf-8")
         for m in re.finditer(r'(?:href|src)="/[^"]*"|fetch\("/[^"]*"', text):
-            leftover.append(f"{f.name}: {m.group(0)}")
-    print("leftover absolute references:", leftover or "none")
-    if leftover:
-        sys.exit("absolute references remain; the UI would break under a sub-path")
+            leftovers.append(f"{f.name}: absolute reference {m.group(0)}")
+        for m in re.finditer(r'https?://[^"\')\s]+', text):
+            if "fonts.googleapis.com" in m.group(0) or "fonts.gstatic.com" in m.group(0):
+                leftovers.append(f"{f.name}: remote font {m.group(0)}")
+    print("problems found:", leftovers or "none")
+    if leftovers:
+        sys.exit(
+            "the UI still has absolute references or third-party font requests:\n  "
+            + "\n  ".join(leftovers)
+        )
 
 
 def main() -> None:
     seed()
     patch_html()
+    patch_css()
     patch_js()
     report_leftovers()
 

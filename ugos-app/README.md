@@ -96,9 +96,9 @@ temp-cloud/                     # 仓库根目录（原 Node.js 项目）
 原前端使用绝对路径（`/app.js`、`/api/...`），只有在站点根目录下才可用。UGOS 应用由系统网关提供，挂载点不保证是根路径。
 
 1. **改为挂载点无关**：资源引用改为相对路径；`app.js` 里新增 `APP_BASE`，从 `app.js` 自身 URL 推导所在目录，所有 API 调用经 `apiUrl()` 解析。这样在站点根、或任意子路径下都能工作。
-2. **Google Fonts 改为非阻塞**：NAS 常处于无外网的内网环境，原本渲染阻塞的远程样式表会拖慢首屏。改为 `media="print" onload="this.media='all'"` 异步加载。
+2. **移除 Google Fonts 外部依赖**：原前端从 Google 拉取 Manrope 字体（`styles.css` 里 `font-family: "Manrope", sans-serif`）。这对一个主打"数据留在内网"的工具是矛盾的——每次打开页面都会向第三方发起 DNS / TLS / 取 CSS / 取字体文件一串请求；NAS 又常处于无外网的内网环境。现已删除全部 `fonts.googleapis.com` / `fonts.gstatic.com` 引用，改用在各平台都自然、且覆盖中文字形的系统字体栈（`system-ui` / `Segoe UI` / `PingFang SC` / `Microsoft YaHei` …）。改写后 `index.html` 中 `https://` 引用数为 **0**，UI 完全自包含。
 
-这两处改写由 `tools/sync_web.py` 自动化：它先从 `../public`（仓库根目录的原版前端）播种 `src/web`，再施加上述改写，最后校验没有残留的绝对路径。上游前端更新后执行：
+这两处改写由 `tools/sync_web.py` 自动化：它先从 `../public`（仓库根目录的原版前端）播种 `src/web`，再施加上述改写，最后校验**既无残留绝对路径、也无任何第三方字体请求**（任一残留都会直接报错退出）。上游前端更新后执行：
 
 ```powershell
 pwsh -File ugos-app/build.ps1 -SyncWeb
