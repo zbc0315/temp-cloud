@@ -8,8 +8,11 @@
 #
 # Usage:
 #   pwsh -File build.ps1
-#   pwsh -File build.ps1 -SyncWeb          # re-seed src/web from ../public first
+#   pwsh -File build.ps1 -SyncWeb          # re-seed src/web from the repo's public/ first
 #   pwsh -File build.ps1 -GoExe /path/to/go -UgcliExe /path/to/ugcli
+#
+# Requirements: Go 1.26.x and ugcli. Nothing else - the icon generator and the
+# frontend patcher are Go commands under src/cmd.
 #
 # Toolchain discovery order: -GoExe/-UgcliExe parameter, then the TEMPCLOUD_GO /
 # UGCLI environment variables, then PATH.
@@ -81,9 +84,17 @@ if ($goVersion -notlike "1.26*") {
 }
 
 if ($SyncWeb) {
-    Step "1/7 re-seed src/web from ../public"
-    python (Join-Path $Root "tools\sync_web.py")
-    if ($LASTEXITCODE -ne 0) { throw "sync_web.py failed" }
+    Step "1/7 re-seed src/web from the upstream public/ frontend"
+    $upstream = Join-Path (Split-Path $Root -Parent) "public"
+    if (-not (Test-Path (Join-Path $upstream "app.js"))) {
+        throw "upstream frontend not found at $upstream (expected index.html, app.js, styles.css)"
+    }
+    Push-Location $Src
+    try {
+        & $GoExe run ./cmd/syncweb -src $upstream -dst (Join-Path $Src "web")
+        if ($LASTEXITCODE -ne 0) { throw "syncweb failed" }
+    }
+    finally { Pop-Location }
 } else {
     Step "1/7 web UI (using committed src/web; pass -SyncWeb to re-seed)"
     Get-ChildItem (Join-Path $Src "web") -File | ForEach-Object {
@@ -157,8 +168,12 @@ Get-ChildItem $www -Recurse -File | ForEach-Object {
 }
 
 Step "6/7 generate application icon"
-python (Join-Path $Root "tools\make_icon.py")
-if ($LASTEXITCODE -ne 0) { throw "icon generation failed" }
+Push-Location $Src
+try {
+    & $GoExe run ./cmd/makeicon -out (Join-Path $Root "rootfs_common\icon.png")
+    if ($LASTEXITCODE -ne 0) { throw "icon generation failed" }
+}
+finally { Pop-Location }
 
 Step "7/7 ugcli check"
 Push-Location $Root

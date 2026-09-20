@@ -1,0 +1,30 @@
+[
+  [
+    "fetch(\"/api/config\")",
+    "fetch(apiUrl(\"api/config\"))"
+  ],
+  [
+    "fetch(\"/api/items/public\")",
+    "fetch(apiUrl(\"api/items/public\"))"
+  ],
+  [
+    "fetch(\"/api/items\", {",
+    "fetch(apiUrl(\"api/items\"), {"
+  ],
+  [
+    "fetch(\"/api/access\", {",
+    "fetch(apiUrl(\"api/access\"), {"
+  ],
+  [
+    "fetch(`/api/items/${item.id}/content${token ? `?token=${encodeURIComponent(token)}` : \"\"}`)",
+    "fetch(apiUrl(`api/items/${item.id}/content${token ? `?token=${encodeURIComponent(token)}` : \"\"}`))"
+  ],
+  [
+    "new URL(`/api/files/${item.id}`, window.location.origin)",
+    "new URL(`api/files/${item.id}`, APP_BASE)"
+  ],
+  [
+    "setStatus(formStatus, data.error || t(\"saveFailed\"), true);",
+    "setStatus(formStatus, data.error || uploadErrorMessage(res.status), true);"
+  ]
+]

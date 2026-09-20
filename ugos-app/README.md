@@ -44,16 +44,19 @@ temp-cloud/                     # 仓库根目录（原 Node.js 项目）
     ├── project.yaml            # UGOS 应用配置（原生应用，非 Docker）
     ├── build.ps1               # 一键构建：编译 → 同步前端 → 生成图标 → ugcli check
     ├── .gitignore              # 排除构建产物
-    ├── tools/
-    │   ├── sync_web.py         # 从 ../public 播种 src/web 并施加必要改写
-    │   └── make_icon.py        # 生成 256×256 应用图标
+    ├── privacy/
+    │   └── privacy.html        # 隐私政策正文（单一来源，中英双语）
     ├── src/                    # Go 源码（不参与打包）
     │   ├── go.mod
     │   ├── main.go             # HTTP 服务、存储、过期清理、优雅退出
     │   ├── helpers.go          # 访问日志、缓存头、编码工具
-    │   └── web/                # 前端源（go:embed 内嵌进二进制），由 tools/sync_web.py 生成
+    │   ├── cmd/
+    │   │   ├── makeicon/       # 生成 256×256 应用图标（纯标准库光栅化）
+    │   │   └── syncweb/        # 从 ../public 播种 src/web 并施加必要改写
+    │   │       └── assets/     # 注入用的 JS/CSS/HTML 片段（go:embed）
+    │   └── web/                # 前端源（go:embed 内嵌进二进制），由 syncweb 生成
     ├── rootfs_common/
-    │   ├── icon.png            # 256×256 应用图标（11.5 KiB，随仓库提交）
+    │   ├── icon.png            # 256×256 应用图标（4.9 KiB，随仓库提交）
     │   └── www/                # 前端静态文件（构建产物，已 gitignore）
     └── rootfs_amd64/
         └── bin/                # 构建产物，已 gitignore
@@ -98,7 +101,7 @@ temp-cloud/                     # 仓库根目录（原 Node.js 项目）
 1. **改为挂载点无关**：资源引用改为相对路径；`app.js` 里新增 `APP_BASE`，从 `app.js` 自身 URL 推导所在目录，所有 API 调用经 `apiUrl()` 解析。这样在站点根、或任意子路径下都能工作。
 2. **移除 Google Fonts 外部依赖**：原前端从 Google 拉取 Manrope 字体（`styles.css` 里 `font-family: "Manrope", sans-serif`）。这对一个主打"数据留在内网"的工具是矛盾的——每次打开页面都会向第三方发起 DNS / TLS / 取 CSS / 取字体文件一串请求；NAS 又常处于无外网的内网环境。现已删除全部 `fonts.googleapis.com` / `fonts.gstatic.com` 引用，改用在各平台都自然、且覆盖中文字形的系统字体栈（`system-ui` / `Segoe UI` / `PingFang SC` / `Microsoft YaHei` …）。改写后 `index.html` 中 `https://` 引用数为 **0**，UI 完全自包含。
 
-这两处改写由 `tools/sync_web.py` 自动化：它先从 `../public`（仓库根目录的原版前端）播种 `src/web`，再施加上述改写，最后校验**既无残留绝对路径、也无任何第三方字体请求**（任一残留都会直接报错退出）。上游前端更新后执行：
+这两处改写由 `src/cmd/syncweb` 自动化：它先从仓库根目录的 `public/`（原版前端）播种 `src/web`，再施加上述改写，最后校验**既无残留绝对路径、也无任何第三方字体请求**（任一残留都会直接报错退出）。它同时把行尾统一为 LF，使产物不受各机器 git `autocrlf` 设置影响、与提交内容保持一致。上游前端更新后执行：
 
 ```powershell
 pwsh -File ugos-app/build.ps1 -SyncWeb
@@ -112,8 +115,9 @@ pwsh -File ugos-app/build.ps1 -SyncWeb
 |---|---|---|
 | Go | **1.26.x** | 见第 7 节，**不要用 1.27+** |
 | ugcli | 1.1.0.25 | Windows 版可做 `create`/`check`；**`pack` 必须在 Linux 上执行** |
-| Python + Pillow | — | 生成图标、同步前端 |
 | WSL / Linux | Debian 12 或同等 | 官方要求 UPK 必须在 Linux 上打包，否则 Unix 权限位不保 |
+
+**没有其他依赖。** 图标生成与前端改写都是 `src/cmd` 下的 Go 命令，构建全链路只需 Go 与 ugcli，不需要 Python、Node 或任何解释器。
 
 ### 构建
 
@@ -289,7 +293,7 @@ sudo /usr/sbin/ugprerm -id com.zbc0315.tempcloud -workflow 3
 
 因此政策如实写明**不收集任何个人信息**，同时披露用户真正需要知道的事：上传内容为明文存储、无密码内容局域网内任何人可读、到期自动删除、临时密码仅保存 SHA-256 摘要。
 
-**应用内入口**（由 `tools/sync_web.py` 注入）：
+**应用内入口**（由 `src/cmd/syncweb` 注入）：
 
 - 页脚常驻隐私政策链接，以及大陆上架所需的**「三清单」**（收集个人信息清单 / 个人信息共享清单 / 第三方 SDK 清单），二者均为"无"
 - 首次打开弹出说明并链向全文。**它不拦截任何操作** —— 本应用不收集信息，不存在需要同意的处理活动，关闭弹窗不影响任何功能（符合规则"不得因拒绝而影响基本功能"）

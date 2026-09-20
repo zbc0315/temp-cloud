@@ -2,7 +2,3 @@
 rootfs_amd64/bin/
 rootfs_common/www/
 build_dir/
-
-# Python
-__pycache__/
-*.pyc
