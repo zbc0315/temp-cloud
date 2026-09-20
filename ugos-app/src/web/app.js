@@ -37,8 +37,10 @@ const messages = {
     screenshotFailed: "截图失败",
     screenshotCancelled: "已取消截图",
     screenshotNeedsSecure:
-      "当前是 HTTP 访问，浏览器不允许网页截图。按 Win+Shift+S 截图，然后在这里按 Ctrl+V 粘贴即可。",
-    screenshotUnsupported: "当前浏览器不支持网页截图，请用系统截图后粘贴。",
+      "当前是 HTTP 访问，浏览器不允许网页截图。按 Win+Shift+S 截图后在这里按 Ctrl+V 粘贴；或改用 HTTPS 入口打开本应用，截图按钮就能直接工作。",
+    screenshotBlocked:
+      "当前窗口没有提供屏幕捕获接口（内嵌浏览器窗口常见）。按 Win+Shift+S 截图后在这里按 Ctrl+V 粘贴。",
+    screenshotUnsupported: "当前浏览器不支持网页截图。按 Win+Shift+S 截图后在这里按 Ctrl+V 粘贴。",
 
     protectedSectionTitle: "密码内容",
     protectedCaptionDefault: "输入密码后显示",
@@ -114,9 +116,11 @@ const messages = {
     screenshotFailed: "Screenshot failed",
     screenshotCancelled: "Screenshot cancelled",
     screenshotNeedsSecure:
-      "This page is served over HTTP, so the browser will not let a web page capture the screen. Press Win+Shift+S, then paste here with Ctrl+V.",
+      "This page is served over HTTP, so the browser will not let a web page capture the screen. Press Win+Shift+S, then paste here with Ctrl+V - or open the app over HTTPS and the button works directly.",
+    screenshotBlocked:
+      "This window does not expose screen capture, which is common in embedded browser windows. Press Win+Shift+S, then paste here with Ctrl+V.",
     screenshotUnsupported:
-      "This browser cannot capture the screen. Take a system screenshot and paste it here.",
+      "This browser cannot capture the screen. Press Win+Shift+S, then paste here with Ctrl+V.",
 
     protectedSectionTitle: "Protected content",
     protectedCaptionDefault: "Shown after password lookup",
@@ -570,14 +574,16 @@ async function captureScreen() {
 
 screenshotButton.addEventListener("click", async () => {
   if (!navigator.mediaDevices?.getDisplayMedia) {
-    // A coarse pointer means a phone or tablet, where the system screenshot
-    // flow is the only one available.
-    const coarse = window.matchMedia?.("(pointer: coarse)").matches;
-    setStatus(
-      formStatus,
-      window.isSecureContext || coarse ? t("screenshotUnsupported") : t("screenshotNeedsSecure"),
-      true
-    );
+    // Report the cause, not the device. The capture API is only exposed in a
+    // secure context, so on a LAN the usual reason is plain HTTP - and that is
+    // the one case the user can do something about. An earlier version branched
+    // on `(pointer: coarse)` first, which is also true on a touchscreen laptop
+    // and would replace the actionable message with "your browser does not
+    // support this".
+    let reason = t("screenshotUnsupported");
+    if (!window.isSecureContext) reason = t("screenshotNeedsSecure");
+    else if (!navigator.mediaDevices) reason = t("screenshotBlocked");
+    setStatus(formStatus, reason, true);
     composerInput.focus();
     return;
   }
