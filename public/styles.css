@@ -103,7 +103,9 @@ body {
 
 /* --- layout -------------------------------------------------------------- */
 .app {
-  width: min(900px, 100% - var(--sp-7));
+  /* The gutter is the only thing between the viewport and the content, so it
+     stays small, and 1180px is a ceiling rather than a target. */
+  width: min(1180px, 100% - var(--sp-6));
   padding: var(--sp-7) 0 var(--sp-2);
   flex: 1;
 }
@@ -111,11 +113,16 @@ body {
 /* Putting things in and taking them out are different jobs, so on a wide screen
    they sit side by side. The putting-in side gets the larger share: a composer
    has a text box and three fields in it, while the other side is a heading, a
-   field and a grid of thumbnails. Below 860px the two stack, which is also
-   where the columns would start to crowd. */
+   field and a grid of thumbnails.
+
+   The out side is a fixed width rather than a share of the row, so widening the
+   page makes the composer wider and leaves the thumbnails exactly as they were.
+   350px is two 167px cards and the gap between them. Below 860px the two stack,
+   which is about where the columns would start to crowd. */
 .layout {
+  --out-width: 350px;
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--out-width);
   gap: var(--sp-5);
   align-items: start;
 }
