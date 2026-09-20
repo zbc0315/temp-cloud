@@ -855,179 +855,282 @@ passwordForm.addEventListener("submit", async (event) => {
   setStatus(passwordStatus, t("lookupSuccess"), "ok");
 });
 
-/* --- the colour field: a slow flock --------------------------------------
-   The four colour masses drift so the glass always has something changing to
-   refract. The motion is a small flocking model rather than four elements
-   easing between fixed points, which is what makes it read as alive:
+/* --- the colour field: Conway's Game of Life ------------------------------
+   The background is a real Game of Life running on a board 48 cells wide,
+   painted into a small canvas and stretched over the viewport. Four decisions
+   make it work as a backdrop rather than as a toy:
 
-     wander      two incommensurate sines per axis, so the path never repeats
-     cohesion    a weak pull toward the flock's centre of mass
-     separation  a push away from a neighbour that drifts too close
-     home        a weak pull back toward this blob's own patch of the column,
-                 which is what keeps colour behind the panels
+   1. The field is drawn from heat, not from life. A live cell sets its cell to
+      full heat and a dead one loses a fixed amount each generation, so what
+      reaches the screen is a trail rather than the pattern itself. This matters
+      more than it sounds: Life settles at three to six percent alive, and at
+      that density a blurred board is a spray of unrelated dots. Trails join
+      them up, a glider draws a comet, an oscillator breathes in place, and the
+      slow drift of structure across the board becomes something you can
+      actually see. The rule underneath is untouched - B3/S23, exactly.
 
-   Only position is animated, on purpose. The text contrast was solved against
-   the composited panel, so opacity has to stay exactly as the stylesheet
-   declares it.
+   2. Heat picks the shade. A cell that was alive this generation takes the
+      deepest blue and one that has been cold for a while takes the palest, so
+      the range of blues is the age of the pattern made visible. One flat colour
+      would just be a blue wash.
 
-   The stylesheet remains the single source of truth for the composition: each
-   blob's starting rect is read from the DOM and becomes its home, so the
-   animation drifts around the layout that was designed and audited rather than
-   around positions invented here. */
+   3. The board starts sparse and is never allowed to empty. Life on a finite
+      board runs down, and an empty board is a flat background, so the
+      population is topped up whenever it falls below a floor. Only the seeding
+      is an addition; the rule stays pure.
+
+   4. Nothing is animated per frame. Generations advance on a timer and the
+      canvas is repainted once per generation.
+
+   Softening is the stylesheet's job, not this code's. `ctx.filter` is not used
+   anywhere here: applied to a magnified drawImage its radius is not honoured in
+   the units it appears to be, and a field that measures perfectly on the canvas
+   arrives on screen as faint noise. A CSS blur on the element has an
+   unambiguous radius in CSS pixels and scales with the viewport the same way
+   the cells do.
+
+   Text contrast is bounded by a single number: the canvas element's opacity in
+   the stylesheet. No cell can be more opaque than the ramp colours themselves,
+   so the worst the field can do to a panel is one known colour at one known
+   alpha. Blur only redistributes that; it cannot raise the maximum. */
 
 function startColourField() {
-  const field = document.querySelector(".field");
-  if (!field) return;
+  const canvas = document.getElementById("colour-field");
+  if (!canvas || typeof canvas.getContext !== "function") return;
 
-  const nodes = Array.from(field.querySelectorAll(".blob"));
-  if (!nodes.length) return;
+  const view = canvas.getContext("2d");
+  if (!view) return;
+
+  const sim = document.createElement("canvas");
+  const simCtx = sim.getContext("2d");
+  if (!simCtx) return;
+
+  // Heat decides the shade, deepest first. The two themes need different blues
+  // rather than different opacities: light mode needs shades dark enough to
+  // read against a pale page, dark mode needs shades light enough to read
+  // against a near-black one.
+  const RAMPS = {
+    light: [[0x12, 0x47, 0x9f], [0x21, 0x66, 0xd6], [0x3f, 0x86, 0xe8],
+            [0x6a, 0xa9, 0xf5], [0x9c, 0xcb, 0xff]],
+    dark: [[0x2f, 0x66, 0xb8], [0x3f, 0x86, 0xe8], [0x5a, 0xa0, 0xf0],
+           [0x86, 0xc4, 0xff], [0xb3, 0xdc, 0xff]]
+  };
+
+  const COLS = 48;
+  const CELL_PX = 6;           // canvas pixels per cell, before the CSS upscale
+  const STEP_MS = 520;         // one generation
+  const SEED_DENSITY = 0.30;
+  const MIN_POPULATION = 0.09;
+  // How much heat a dead cell loses per generation, out of 255. At 16 a trail
+  // lasts about sixteen generations, which at this step rate is roughly eight
+  // seconds - long enough to read as a path, short enough that the field keeps
+  // moving.
+  const COOLING = 16;
+  const OPENING_STEPS = 10;    // so the page opens on structure, not a flat seed
+  const SETTLE_STEPS = 16;     // used to compose the reduced-motion still
+
+  let cols = COLS;
+  let rows = 0;
+  let cells = null;
+  let scratch = null;
+  let heat = null;
+  let image = null;
+
+  const at = (x, y) => y * cols + x;
+
+  function ramp() {
+    return document.body.dataset.theme === "dark" ? RAMPS.dark : RAMPS.light;
+  }
+
+  function resize() {
+    const width = window.innerWidth || 1;
+    const height = window.innerHeight || 1;
+    const wanted = Math.max(12, Math.round((cols * height) / width));
+    if (wanted === rows) return;
+
+    const before = cells;
+    const beforeRows = rows;
+
+    rows = wanted;
+    cells = new Uint8Array(cols * rows);
+    scratch = new Uint8Array(cols * rows);
+    heat = new Uint8Array(cols * rows);
+
+    // Keep whatever was on screen; only a change of aspect needs a different
+    // number of rows.
+    if (before) {
+      const shared = Math.min(beforeRows, rows);
+      for (let y = 0; y < shared; y += 1) {
+        for (let x = 0; x < cols; x += 1) cells[at(x, y)] = before[at(x, y)];
+      }
+    }
+
+    sim.width = cols;
+    sim.height = rows;
+    image = simCtx.createImageData(cols, rows);
+
+    canvas.width = cols * CELL_PX;
+    canvas.height = rows * CELL_PX;
+    view.imageSmoothingEnabled = true;
+  }
+
+  function seed(density) {
+    for (let i = 0; i < cells.length; i += 1) {
+      const alive = Math.random() < density ? 1 : 0;
+      cells[i] = alive;
+      heat[i] = alive ? 255 : 0;
+    }
+  }
+
+  // Standard B3/S23 on a torus: a dead cell with exactly three live neighbours
+  // is born, a live cell with two or three survives, everything else dies.
+  function step() {
+    for (let y = 0; y < rows; y += 1) {
+      const up = (y - 1 + rows) % rows;
+      const down = (y + 1) % rows;
+      for (let x = 0; x < cols; x += 1) {
+        const left = (x - 1 + cols) % cols;
+        const right = (x + 1) % cols;
+        const neighbours =
+          cells[at(left, up)] + cells[at(x, up)] + cells[at(right, up)] +
+          cells[at(left, y)] + cells[at(right, y)] +
+          cells[at(left, down)] + cells[at(x, down)] + cells[at(right, down)];
+        const alive = cells[at(x, y)];
+        scratch[at(x, y)] = neighbours === 3 || (alive === 1 && neighbours === 2) ? 1 : 0;
+      }
+    }
+
+    const spent = cells;
+    cells = scratch;
+    scratch = spent;
+
+    let population = 0;
+    for (let i = 0; i < cells.length; i += 1) {
+      if (cells[i]) {
+        heat[i] = 255;
+        population += 1;
+      } else if (heat[i] > 0) {
+        heat[i] = heat[i] > COOLING ? heat[i] - COOLING : 0;
+      }
+    }
+
+    // An empty board is a flat background, so a run-down population is topped
+    // up. Seeding a few small patches rather than uniformly gives the new
+    // growth something to spread out from.
+    if (population < cells.length * MIN_POPULATION) {
+      for (let patch = 0; patch < 5; patch += 1) {
+        const cx = Math.floor(Math.random() * cols);
+        const cy = Math.floor(Math.random() * rows);
+        for (let dy = -1; dy <= 1; dy += 1) {
+          for (let dx = -1; dx <= 1; dx += 1) {
+            const x = (cx + dx + cols) % cols;
+            const y = (cy + dy + rows) % rows;
+            cells[at(x, y)] = Math.random() < 0.5 ? 1 : 0;
+            heat[at(x, y)] = 255;
+          }
+        }
+      }
+    }
+  }
+
+  function draw() {
+    const shades = ramp();
+    const data = image.data;
+
+    for (let i = 0; i < cells.length; i += 1) {
+      const offset = i * 4;
+      const value = heat[i];
+      if (value === 0) {
+        data[offset + 3] = 0;
+        continue;
+      }
+      // Five heat bands, hottest at the deep end. Alpha follows the heat too,
+      // so a cold trail fades out instead of ending in a hard edge.
+      const band = value > 200 ? 0 : value > 140 ? 1 : value > 80 ? 2 : value > 30 ? 3 : 4;
+      const rgb = shades[band];
+      data[offset] = rgb[0];
+      data[offset + 1] = rgb[1];
+      data[offset + 2] = rgb[2];
+      data[offset + 3] = value;
+    }
+
+    simCtx.putImageData(image, 0, 0);
+
+    view.clearRect(0, 0, canvas.width, canvas.height);
+    view.drawImage(sim, 0, 0, cols, rows, 0, 0, canvas.width, canvas.height);
+  }
+
+  function settle(steps) {
+    seed(SEED_DENSITY);
+    for (let i = 0; i < steps; i += 1) step();
+    draw();
+  }
+
+  let timer = 0;
+  let stepped = 0;
+
+  function tick(now) {
+    timer = window.requestAnimationFrame(tick);
+    if (!stepped) {
+      stepped = now;
+      return;
+    }
+    if (now - stepped < STEP_MS) return;
+    stepped = now;
+    step();
+    draw();
+  }
+
+  function start() {
+    if (timer) return;
+    stepped = 0;
+    timer = window.requestAnimationFrame(tick);
+  }
+
+  function stop() {
+    window.cancelAnimationFrame(timer);
+    timer = 0;
+  }
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-  let width = window.innerWidth;
-  let height = window.innerHeight;
-
-  const clamp = (value, low, high) => Math.min(Math.max(value, low), high);
-
-  const agents = nodes.map((node, index) => {
-    const box = node.getBoundingClientRect();
-    const x = (box.left + box.width / 2) / width;
-    const y = (box.top + box.height / 2) / height;
-    return {
-      node,
-      w: box.width,
-      h: box.height,
-      x,
-      y,
-      vx: 0,
-      vy: 0,
-      // Home stays a little inside the viewport so a blob can never wander off
-      // and leave a panel sitting over a flat background.
-      home: { x: clamp(x, 0.2, 0.8), y: clamp(y, 0.12, 0.85) },
-      // Desynchronises the wander so the four never move in lockstep.
-      phase: index * 1.7
-    };
-  });
-
-  // Take over positioning. The stylesheet's offsets are the static field and
-  // have just been read; from here the same places are expressed as transforms
-  // so they can be composited instead of laid out.
-  for (const agent of agents) {
-    agent.node.style.left = "0";
-    agent.node.style.top = "0";
-    agent.node.style.right = "auto";
-    agent.node.style.bottom = "auto";
-    place(agent);
-  }
-
-  function place(agent) {
-    const left = agent.x * width - agent.w / 2;
-    const top = agent.y * height - agent.h / 2;
-    agent.node.style.transform = `translate3d(${left.toFixed(2)}px, ${top.toFixed(2)}px, 0)`;
-  }
-
-  const WANDER = 0.012;        // acceleration, in viewport widths per second^2
-  const HOME_PULL = 0.16;      // spring constant toward the blob's own patch
-  const COHESION = 0.03;       // spring constant toward the flock
-  const SEPARATION = 0.26;     // radius below which neighbours push apart
-  const SEPARATION_PUSH = 0.10;
-  const DAMPING = 1.0;         // per second
-  const MAX_SPEED = 0.05;      // viewport widths per second, a safety cap only
-
-  let clock = 0;
-
-  function step(dt) {
-    clock += dt;
-
-    let centreX = 0;
-    let centreY = 0;
-    for (const agent of agents) {
-      centreX += agent.x;
-      centreY += agent.y;
-    }
-    centreX /= agents.length;
-    centreY /= agents.length;
-
-    for (const agent of agents) {
-      const wanderX =
-        Math.sin(clock * 0.11 + agent.phase) + 0.5 * Math.sin(clock * 0.043 + agent.phase * 2.3);
-      const wanderY =
-        Math.cos(clock * 0.083 + agent.phase * 1.4) + 0.5 * Math.cos(clock * 0.037 + agent.phase * 0.7);
-
-      let ax = wanderX * WANDER + (agent.home.x - agent.x) * HOME_PULL;
-      let ay = wanderY * WANDER + (agent.home.y - agent.y) * HOME_PULL;
-
-      ax += (centreX - agent.x) * COHESION;
-      ay += (centreY - agent.y) * COHESION;
-
-      for (const other of agents) {
-        if (other === agent) continue;
-        const dx = agent.x - other.x;
-        const dy = agent.y - other.y;
-        const distanceSquared = dx * dx + dy * dy;
-        if (distanceSquared >= SEPARATION * SEPARATION || distanceSquared === 0) continue;
-        const distance = Math.sqrt(distanceSquared);
-        const push = (1 - distance / SEPARATION) * SEPARATION_PUSH;
-        ax += (dx / distance) * push;
-        ay += (dy / distance) * push;
-      }
-
-      agent.vx += ax * dt;
-      agent.vy += ay * dt;
-
-      const damping = Math.exp(-DAMPING * dt);
-      agent.vx *= damping;
-      agent.vy *= damping;
-
-      const speed = Math.hypot(agent.vx, agent.vy);
-      if (speed > MAX_SPEED) {
-        agent.vx = (agent.vx / speed) * MAX_SPEED;
-        agent.vy = (agent.vy / speed) * MAX_SPEED;
-      }
-
-      agent.x += agent.vx * dt;
-      agent.y += agent.vy * dt;
-    }
-
-    for (const agent of agents) place(agent);
-  }
-
-  let frameHandle = 0;
-  let previous = 0;
-
-  function tick(now) {
-    frameHandle = window.requestAnimationFrame(tick);
-    if (!previous) {
-      previous = now;
-      return;
-    }
-    // Clamped so a backgrounded tab does not resume with one huge jump.
-    const dt = Math.min((now - previous) / 1000, 0.05);
-    previous = now;
-    if (dt > 0) step(dt);
-  }
-
-  function sync() {
-    const wanted = !reducedMotion.matches && !document.hidden;
-    if (wanted === Boolean(frameHandle)) return;
-    if (wanted) {
-      previous = 0;
-      frameHandle = window.requestAnimationFrame(tick);
-    } else {
-      window.cancelAnimationFrame(frameHandle);
-      frameHandle = 0;
-    }
-  }
-
   window.addEventListener("resize", () => {
-    width = window.innerWidth;
-    height = window.innerHeight;
-    for (const agent of agents) place(agent);
+    resize();
+    draw();
   });
-  document.addEventListener("visibilitychange", sync);
-  if (reducedMotion.addEventListener) reducedMotion.addEventListener("change", sync);
 
-  sync();
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stop();
+    else if (!reducedMotion.matches) start();
+  });
+
+  if (reducedMotion.addEventListener) {
+    reducedMotion.addEventListener("change", () => {
+      if (reducedMotion.matches) {
+        stop();
+        settle(SETTLE_STEPS);
+      } else {
+        start();
+      }
+    });
+  }
+
+  // Repaint on a theme change so the ramp follows the theme even while the
+  // simulation is paused.
+  if (typeof MutationObserver === "function") {
+    new MutationObserver(draw).observe(document.body, {
+      attributes: true,
+      attributeFilter: ["data-theme"]
+    });
+  }
+
+  resize();
+  if (reducedMotion.matches) {
+    settle(SETTLE_STEPS);
+  } else {
+    settle(OPENING_STEPS);
+    start();
+  }
 }
 
 /* --- chrome --------------------------------------------------------------- */

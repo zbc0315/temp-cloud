@@ -126,37 +126,54 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* --- the colour field: saturated, and it sits *behind the card* ----------
-   An earlier attempt put the blobs in the page corners while the card sits in
-   the middle, so the glass had nothing to refract and read as plain white.
-   The blobs are grouped around the content column, with only a light pre-blur
-   so the panel's own backdrop-filter does the work.
+/* --- the colour field: Conway's Game of Life, in one colour --------------
+   The field sits behind every panel, so it is what the glass refracts.
 
-   Four blobs, not five: the field is a backdrop rather than UI palette, but
-   every extra hue is one more colour a reviewer has to justify, and four
-   already cover the column top to bottom. */
-.field { position: fixed; inset: 0; z-index: -1; overflow: hidden; }
+   It is drawn by the page script into a small canvas and stretched to the
+   viewport, which is why nothing here blurs: the simulation runs at 64 cells
+   across, and the browser's own bilinear upscale turns that into soft masses
+   for free. A CSS blur over a full-viewport layer would have to be recomputed
+   on every generation; this way the expensive work stays inside a 256x160
+   canvas.
+
+   The base gradient is both the ambient wash and the no-JS fallback. It is
+   deliberately pale: the field's colour comes from the simulation, and this
+   only has to stop the page looking bare if the script never runs. */
+.field {
+  position: fixed; inset: 0; z-index: -1; overflow: hidden;
+  background:
+    radial-gradient(120% 95% at 16% 6%, rgba(88, 152, 240, 0.30), rgba(88, 152, 240, 0) 62%),
+    radial-gradient(120% 95% at 86% 94%, rgba(24, 74, 168, 0.24), rgba(24, 74, 168, 0) 60%),
+    var(--page);
+}
+body[data-theme="dark"] .field {
+  background:
+    radial-gradient(120% 95% at 16% 6%, rgba(70, 130, 220, 0.22), rgba(70, 130, 220, 0) 64%),
+    radial-gradient(120% 95% at 86% 94%, rgba(40, 96, 190, 0.18), rgba(40, 96, 190, 0) 62%),
+    var(--page);
+}
 .field::after {
   content: ""; position: absolute; inset: 0;
   background: linear-gradient(180deg, var(--scrim-top), var(--scrim-bottom));
 }
-/* `will-change: transform` promotes each blob so the slow drift applied by the
-   page script is a compositor transform: the 48px blur is rasterised once
-   instead of being recomputed on every frame. Opacity is deliberately not part
-   of the animation - the text colours were solved against the composited panel,
-   so changing how much colour shows through would invalidate that. */
-.blob {
-  position: absolute; border-radius: 50%; filter: blur(48px);
-  will-change: transform;
+
+/* The canvas is the simulation's only visible surface. Its opacity is the
+   single number that bounds how much colour can reach a panel, which is what
+   makes the text contrast provable rather than something to sample.
+
+   The softening is a CSS blur rather than a ctx.filter inside the script. The
+   radius here is in CSS pixels and means what it says; the same radius handed
+   to a magnified drawImage is not honoured in those units, and a field that
+   measures perfectly on the canvas arrives on screen as faint noise. It also
+   scales with the viewport, which is how the cells scale: 48 cells across is
+   1/48 of the width, so a little under one cell is 1.4vw. */
+.field-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0.55;
+  filter: blur(1.4vw);
 }
-.b1 { width: 700px; height: 700px; top: -170px; left: 6%;   background: #4f8dff; opacity: .72; }
-.b2 { width: 620px; height: 620px; top: -90px;  right: 3%;  background: #ff5f9e; opacity: .62; }
-.b3 { width: 780px; height: 780px; top: 20%;    left: 16%;  background: #ffb43d; opacity: .58; }
-.b4 { width: 720px; height: 720px; top: 46%;    right: 10%; background: #14d6a4; opacity: .60; }
-body[data-theme="dark"] .b1 { opacity: .44; }
-body[data-theme="dark"] .b2 { opacity: .36; }
-body[data-theme="dark"] .b3 { opacity: .32; }
-body[data-theme="dark"] .b4 { opacity: .34; }
+body[data-theme="dark"] .field-canvas { opacity: 0.50; }
 
 /* --- app bar: frosts whatever scrolls under it --------------------------- */
 .bar {
@@ -176,9 +193,11 @@ body[data-theme="dark"] .b4 { opacity: .34; }
   gap: var(--sp-3);
 }
 .brand { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+/* Two stops, both inside the accent family: the mark is the one place a
+   gradient is worth a second colour, and a third stop only added a hue. */
 .brand-mark {
   width: 26px; height: 26px; flex: none; border-radius: 9px;
-  background: linear-gradient(150deg, #6cb6ff, var(--accent) 60%, #0050b3);
+  background: linear-gradient(150deg, #7cc0ff, #0050b3);
   box-shadow: inset 0 1px 1px rgba(255,255,255,0.7), 0 2px 8px rgba(0, 81, 179, 0.35);
 }
 .brand-name { font-size: var(--fs-3); font-weight: 600; letter-spacing: -0.022em; }

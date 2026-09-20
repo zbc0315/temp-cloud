@@ -9,13 +9,11 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <!-- A saturated colour field for the glass to sit over. Decorative only:
-         without it the panels have nothing to refract and read as flat cards. -->
+    <!-- The colour field the glass refracts: Conway's Game of Life, drawn by
+         the page script into a small canvas and stretched over the viewport.
+         The .field base gradient behind it is the no-JS fallback. -->
     <div class="field" aria-hidden="true">
-      <span class="blob b1"></span>
-      <span class="blob b2"></span>
-      <span class="blob b3"></span>
-      <span class="blob b4"></span>
+      <canvas id="colour-field" class="field-canvas"></canvas>
     </div>
 
     <header class="bar">
