@@ -214,6 +214,17 @@ body {
 .tool svg { width: 18px; height: 18px; color: var(--accent-deep); }
 .tool[disabled] { opacity: .5; cursor: default; }
 
+/* Says what to do instead when the window cannot capture the screen at all.
+   Muted and centred so it reads as a note about the tools above it rather than
+   as an error. */
+.tool-note {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-1);
+  line-height: 1.6;
+  color: var(--label-2);
+  text-align: center;
+}
+
 /* --- attached content ----------------------------------------------------
    Pills that wrap, not full-width rows. A row per file was fine when there
    could only be one; with ten in the box it pushes the save button off the

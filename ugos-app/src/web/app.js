@@ -36,11 +36,10 @@ const messages = {
     screenshotPrefix: "屏幕截图",
     screenshotFailed: "截图失败",
     screenshotCancelled: "已取消截图",
-    screenshotNeedsSecure:
-      "当前是 HTTP 访问，浏览器不允许网页截图。按 Win+Shift+S 截图后在这里按 Ctrl+V 粘贴；或改用 HTTPS 入口打开本应用，截图按钮就能直接工作。",
-    screenshotBlocked:
-      "当前窗口没有提供屏幕捕获接口（内嵌浏览器窗口常见）。按 Win+Shift+S 截图后在这里按 Ctrl+V 粘贴。",
-    screenshotUnsupported: "当前浏览器不支持网页截图。按 Win+Shift+S 截图后在这里按 Ctrl+V 粘贴。",
+    screenshotHintHttp:
+      "浏览器不允许 HTTP 页面截屏。改用 HTTPS 入口访问即可直接截图；或按 Win+Shift+S 截图后在这里按 Ctrl+V 粘贴。",
+    screenshotHintEmbedded:
+      "当前窗口内无法直接截屏。按 Win+Shift+S 截图后在这里按 Ctrl+V 粘贴即可。",
 
     protectedSectionTitle: "密码内容",
     protectedCaptionDefault: "输入密码后显示",
@@ -115,12 +114,10 @@ const messages = {
     screenshotPrefix: "Screenshot",
     screenshotFailed: "Screenshot failed",
     screenshotCancelled: "Screenshot cancelled",
-    screenshotNeedsSecure:
-      "This page is served over HTTP, so the browser will not let a web page capture the screen. Press Win+Shift+S, then paste here with Ctrl+V - or open the app over HTTPS and the button works directly.",
-    screenshotBlocked:
-      "This window does not expose screen capture, which is common in embedded browser windows. Press Win+Shift+S, then paste here with Ctrl+V.",
-    screenshotUnsupported:
-      "This browser cannot capture the screen. Press Win+Shift+S, then paste here with Ctrl+V.",
+    screenshotHintHttp:
+      "A browser will not let an HTTP page capture the screen. Open the app over HTTPS to use this button, or press Win+Shift+S and paste here with Ctrl+V.",
+    screenshotHintEmbedded:
+      "This window cannot capture the screen. Press Win+Shift+S, then paste here with Ctrl+V.",
 
     protectedSectionTitle: "Protected content",
     protectedCaptionDefault: "Shown after password lookup",
@@ -313,6 +310,7 @@ function applyI18n() {
   });
   updateTheme();
   renderAttachments();
+  renderScreenshotNote();
 }
 
 function formatTime(value) {
@@ -572,17 +570,42 @@ async function captureScreen() {
   }
 }
 
+// Why the capture API is missing, or "" if it is there. One message per
+// situation, used both for the standing note under the tools and for the
+// response to a click, so the two can never disagree.
+//
+//   plain HTTP   the API is not exposed outside a secure context at all, and on
+//                a LAN that is the usual reason
+//   otherwise    the host did not grant the page screen capture, which is what
+//                happens inside the UGOS desktop client: the app runs in a frame
+//                on the client's own HTTPS shell, so the frame is a secure
+//                context and the first test passes, but the client does not put
+//                `allow="display-capture"` on it and Chromium then removes the
+//                method rather than leaving one that always fails. A frame's
+//                permissions belong to the page that embeds it, so this is not
+//                something the application can change.
+function captureUnavailableMessage() {
+  if (!window.isSecureContext) return t("screenshotHintHttp");
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+    return t("screenshotHintEmbedded");
+  }
+  return "";
+}
+
+// Said under the tools rather than only after a click that was never going to
+// work. The button will not capture inside the desktop client, so saying so up
+// front is the difference between a broken feature and a documented one.
+function renderScreenshotNote() {
+  const note = document.getElementById("screenshot-note");
+  if (!note) return;
+  const text = captureUnavailableMessage();
+  note.textContent = text;
+  note.classList.toggle("hidden", text === "");
+}
+
 screenshotButton.addEventListener("click", async () => {
-  if (!navigator.mediaDevices?.getDisplayMedia) {
-    // Report the cause, not the device. The capture API is only exposed in a
-    // secure context, so on a LAN the usual reason is plain HTTP - and that is
-    // the one case the user can do something about. An earlier version branched
-    // on `(pointer: coarse)` first, which is also true on a touchscreen laptop
-    // and would replace the actionable message with "your browser does not
-    // support this".
-    let reason = t("screenshotUnsupported");
-    if (!window.isSecureContext) reason = t("screenshotNeedsSecure");
-    else if (!navigator.mediaDevices) reason = t("screenshotBlocked");
+  const reason = captureUnavailableMessage();
+  if (reason) {
     setStatus(formStatus, reason, true);
     composerInput.focus();
     return;
