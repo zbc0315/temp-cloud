@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Temp Cloud 隐私政策 / Privacy Policy</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --surface: #fffdf8;
+    --text: #1f1d1a;
+    --muted: #6d675d;
+    --accent: #ba4a2f;
+    --line: #e2dcd0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2.5rem 1.25rem 5rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+      Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    line-height: 1.75;
+    font-size: 16px;
+  }
+  main { max-width: 46rem; margin: 0 auto; }
+  h1 { font-size: 1.75rem; line-height: 1.3; margin: 0 0 0.35rem; }
+  h2 {
+    font-size: 1.15rem;
+    margin: 2.4rem 0 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--line);
+  }
+  h3 { font-size: 1rem; margin: 1.6rem 0 0.5rem; }
+  .meta { color: var(--muted); font-size: 0.9rem; margin: 0 0 2rem; }
+  .lede {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 1rem 1.15rem;
+    margin: 1.5rem 0;
+  }
+  ul { padding-left: 1.35rem; }
+  li { margin: 0.3rem 0; }
+  code {
+    background: #ece7dc;
+    border-radius: 4px;
+    padding: 0.1em 0.35em;
+    font-size: 0.9em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
+  th, td { text-align: left; padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; }
+  hr.sep { border: 0; border-top: 2px solid var(--line); margin: 4rem 0 2.5rem; }
+  a { color: var(--accent); }
+  footer { max-width: 46rem; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<main>
+
+<h1>Temp Cloud 隐私政策</h1>
+<p class="meta">
+  适用应用：Temp Cloud（绿联云 NAS 应用，应用 ID <code>com.zbc0315.tempcloud</code>）<br>
+  版本 1.0 · 生效日期 2026 年 9 月 20 日
+</p>
+
+<p class="lede">
+  <strong>一句话概括：Temp Cloud 不收集、不出示、不上传你的任何个人信息。</strong>
+  应用完全运行在你自己的 NAS 上，不包含账号体系、统计埋点、崩溃上报或任何第三方 SDK，
+  也不向设备外部发送任何数据。
+</p>
+
+<h2>一、适用范围</h2>
+<p>
+  本政策适用于 Temp Cloud 绿联云 NAS 应用（以下称"本应用"）。本应用由开发者
+  <code>zbc0315</code>（以下称"我们"）开发并通过绿联云应用中心分发。
+</p>
+<p>
+  本政策<strong>不适用</strong>于：绿联 NAS 设备本身及绿联云系统的隐私实践（请参阅绿联相应产品的隐私政策）；
+  也不适用于你的 NAS 上所运行的其他应用。
+</p>
+
+<h2>二、我们不收集个人信息</h2>
+<p>本应用不处理任何可识别到你个人身份的信息。具体而言，本应用<strong>不收集</strong>：</p>
+<ul>
+  <li>姓名、手机号、邮箱、身份证件等身份信息；</li>
+  <li>账号、密码或任何登录凭据（本应用没有账号体系）；</li>
+  <li>设备标识符、MAC 地址、序列号等设备信息；</li>
+  <li>IP 地址、地理位置、网络运营商信息；</li>
+  <li>通讯录、相册、短信、通话记录、剪贴板等终端数据；</li>
+  <li>使用行为、点击流、停留时长等行为数据；</li>
+  <li>崩溃日志与诊断信息。</li>
+</ul>
+<p>
+  本应用也没有集成任何统计、广告、推送或崩溃分析类第三方组件。经核对，本应用的后端仅使用
+  Go 语言标准库构建，前端仅包含自有 HTML/CSS/JavaScript，<strong>不含任何第三方 SDK</strong>。
+</p>
+
+<h2>三、本应用实际处理的数据</h2>
+<p>
+  本应用会处理<strong>你自己主动上传或粘贴的内容</strong>。这些内容由你本人提供，用于在局域网内的设备之间
+  临时中转，我们不会读取、不会分析、不会外传。
+</p>
+
+<h3>3.1 处理的数据项</h3>
+<table>
+  <tr><th>数据项</th><th>用途</th><th>是否必需</th></tr>
+  <tr><td>你上传的文件或图片</td><td>存储于 NAS 本地，供你在其他设备上下载</td><td>选择"文件/图片"类型时必需</td></tr>
+  <tr><td>你粘贴的文本内容</td><td>存储于 NAS 本地，供你在其他设备上复制</td><td>选择"文本"类型时必需</td></tr>
+  <tr><td>你填写的标题</td><td>便于你在列表中识别该内容</td><td>可选</td></tr>
+  <tr><td>你设置的临时密码</td><td>为内容增加一道访问门槛</td><td>可选</td></tr>
+  <tr><td>你选择的保存时长</td><td>到期后自动删除该内容</td><td>必需</td></tr>
+</table>
+<p>
+  上述内容均存储于你 NAS 上的应用数据目录
+  （<code>/volume*/@appdata/com.zbc0315.tempcloud/</code>），
+  <strong>不经过我们的服务器，也不离开你的局域网</strong>。
+</p>
+
+<h3>3.2 存储方式与加密状态（如实告知）</h3>
+<ul>
+  <li>上传的文件与图片以<strong>原始二进制形式</strong>存放于应用数据目录，本应用不对其加密；</li>
+  <li>文本内容同样以明文记录在应用的索引文件 <code>items.json</code> 中；</li>
+  <li>临时密码<strong>不以明文保存</strong>，仅保存其 SHA-256 摘要值，用于校验；</li>
+  <li>数据目录的访问受 NAS 系统自身的文件权限与账号体系保护。</li>
+</ul>
+
+<h3>3.3 访问控制</h3>
+<ul>
+  <li>设置了临时密码的内容，需要输入正确密码后才能查看或下载；</li>
+  <li><strong>未设置密码的内容，任何能够访问该应用地址的局域网内用户都可以查看或下载</strong>。请勿通过本应用中转敏感信息，除非你设置了临时密码；</li>
+  <li>本应用的身份校验由绿联云系统的应用网关完成，本应用自身不额外建立用户账号。</li>
+</ul>
+
+<h3>3.4 保留期限与删除</h3>
+<ul>
+  <li>每一条内容在你设置的保存时长到期后<strong>自动删除</strong>（默认 1 小时，最长 24 小时），对应的上传文件一并从磁盘移除；</li>
+  <li>你也可以通过卸载本应用即时删除全部数据——卸载会一并清除应用数据目录；</li>
+  <li>本应用不保留任何历史副本，也不做云端备份。</li>
+</ul>
+
+<h2>四、系统权限说明</h2>
+<p>
+  本应用<strong>不申请</strong>相册、通讯录、位置、摄像头、麦克风、短信等任何系统敏感权限。
+  它只使用一个用于提供 HTTP 服务的本地网络端口（默认 <code>21039</code>）。
+</p>
+<p>
+  本应用遵循权限最小化原则：不一次性申请与功能无关的权限；不因你拒绝任何非必要授权而限制核心功能。
+</p>
+
+<h2>五、第三方 SDK 与组件</h2>
+<p>
+  本应用<strong>未接入任何第三方 SDK 或组件</strong>。不存在广告、统计分析、推送、社交分享、
+  崩溃收集等第三方服务，因此也不存在与之相关的个人信息收集或共享行为。
+</p>
+<p>
+  本应用的前端页面不加载任何外部字体、脚本或样式资源，在完全无外网的环境中亦可正常工作。
+</p>
+
+<h2>六、网络与数据传输</h2>
+<ul>
+  <li>本应用<strong>不向设备外部发送任何数据</strong>，不与我们或任何第三方建立网络连接；</li>
+  <li>本应用只在你 NAS 所在的局域网内提供 HTTP 服务，用于你本人的设备之间中转内容；</li>
+  <li>如你通过绿联云 UGREENlink 远程访问本应用，该链路由绿联云系统提供，其加密与传输规则适用绿联相应的隐私政策。</li>
+</ul>
+
+<h2>七、日志</h2>
+<p>为便于排查运行问题，本应用会在 NAS 的应用日志目录记录访问日志，每条日志仅包含：</p>
+<ul>
+  <li>HTTP 请求方法（如 <code>GET</code>、<code>POST</code>）</li>
+  <li>请求路径（内容 ID 为随机生成，不含任何身份信息）</li>
+  <li>响应状态码、响应字节数、处理耗时</li>
+</ul>
+<p>
+  <strong>日志不记录 IP 地址、不记录浏览器标识、不记录查询参数，也不记录任何内容正文。</strong>
+  日志随应用卸载一并删除。
+</p>
+
+<h2>八、个人信息清单（"三清单"）</h2>
+<p>若你在中国大陆地区分发本应用，以下为所需的清单内容：</p>
+<table>
+  <tr><th>清单</th><th>内容</th></tr>
+  <tr><td>收集个人信息清单</td><td><strong>无。</strong>本应用不收集任何个人信息。</td></tr>
+  <tr><td>个人信息共享清单</td><td><strong>无。</strong>本应用不向任何第三方共享、转让或公开披露任何个人信息。</td></tr>
+  <tr><td>第三方 SDK 清单</td><td><strong>无。</strong>本应用未接入任何第三方 SDK。</td></tr>
+</table>
+
+<h2>九、数据安全措施</h2>
+<ul>
+  <li>内容仅存放于你自己的 NAS 本地，不产生云端副本；</li>
+  <li>临时密码以摘要形式保存，不明文存储；</li>
+  <li>内容按你设定的时长自动过期删除，降低长期留存风险；</li>
+  <li>应用运行于绿联云系统提供的隔离沙箱中，仅拥有其数据目录的读写权限；</li>
+  <li>应用进程不驻留后台任务，不占用超出服务所需的 CPU、内存或磁盘资源。</li>
+</ul>
+
+<h2>十、你的权利与行使方式</h2>
+<p>由于本应用不收集你的个人信息，因此不存在需要我们配合查询或更正的记录。对于你上传的内容，你可以随时自行行使以下权利：</p>
+<ul>
+  <li><strong>查询与访问</strong>：在应用界面中直接查看当前未过期的内容；</li>
+  <li><strong>删除</strong>：卸载本应用即可删除全部数据，或等待内容到期自动清除；</li>
+  <li><strong>撤回同意</strong>：不再使用并卸载本应用即视为撤回；本应用不因此限制任何功能，因为它本就不依赖个人信息处理；</li>
+  <li><strong>投诉与咨询</strong>：可通过下方联系方式与我们联系。</li>
+</ul>
+
+<h2>十一、未成年人保护</h2>
+<p>
+  本应用为通用的局域网文件中转工具，不面向未成年人设计，也不收集任何年龄信息。
+  由于本应用不收集个人信息，不会存在针对未成年人的个人信息处理场景。
+  如监护人认为有相关问题，可通过下方方式联系我们。
+</p>
+
+<h2>十二、本政策的更新</h2>
+<p>
+  如本应用的功能发生变化并影响到本政策内容，我们会在应用更新时同步更新本政策，并在应用内提示。
+  本政策的版本号与生效日期见页首。你在政策更新后继续使用本应用，即视为接受更新后的政策。
+</p>
+
+<h2>十三、联系方式</h2>
+<p>对本政策有任何疑问、意见或投诉，可通过以下方式联系我们：</p>
+<ul>
+  <li>开发者 / 运营者：<code>zbc0315</code></li>
+  <li>联系渠道：<a href="https://github.com/zbc0315/temp-cloud/issues" rel="noopener">https://github.com/zbc0315/temp-cloud/issues</a></li>
+  <li>项目主页：<a href="https://github.com/zbc0315/temp-cloud" rel="noopener">https://github.com/zbc0315/temp-cloud</a></li>
+</ul>
+<p>我们会在收到你的反馈后尽快答复。</p>
+
+<hr class="sep">
+
+<h1 id="english">Temp Cloud Privacy Policy</h1>
+<p class="meta">
+  Applies to: Temp Cloud (UGREEN NAS application, app ID <code>com.zbc0315.tempcloud</code>)<br>
+  Version 1.0 · Effective 20 September 2026
+</p>
+
+<p class="lede">
+  <strong>In one sentence: Temp Cloud does not collect, display, or upload any of your personal information.</strong>
+  The application runs entirely on your own NAS. It has no account system, no analytics, no crash reporting,
+  and no third-party SDKs, and it sends no data off the device.
+</p>
+
+<h2>1. Scope</h2>
+<p>
+  This policy applies to the Temp Cloud UGREEN NAS application ("the App"), developed by
+  <code>zbc0315</code> ("we", "us") and distributed through the UGREEN NAS App Center.
+</p>
+<p>
+  This policy does <strong>not</strong> cover the privacy practices of the UGREEN NAS device or the UGOS
+  system itself, nor those of any other application running on your NAS.
+</p>
+
+<h2>2. We do not collect personal information</h2>
+<p>The App processes no information that could identify you. Specifically, the App does <strong>not</strong> collect:</p>
+<ul>
+  <li>identity data such as name, phone number, email address, or government ID;</li>
+  <li>accounts, passwords, or any login credentials (the App has no account system);</li>
+  <li>device identifiers such as advertising IDs, MAC addresses, or serial numbers;</li>
+  <li>IP addresses, location, or network operator details;</li>
+  <li>contacts, photo library, messages, call logs, or clipboard contents;</li>
+  <li>usage behaviour, click streams, or session duration;</li>
+  <li>crash logs or diagnostic data.</li>
+</ul>
+<p>
+  The App integrates no analytics, advertising, push, or crash-reporting components. Its backend is built
+  using only the Go standard library and its frontend is self-authored HTML/CSS/JavaScript, so it contains
+  <strong>no third-party SDK</strong>.
+</p>
+
+<h2>3. Data the App actually handles</h2>
+<p>
+  The App handles <strong>content you choose to upload or paste</strong>. You provide it yourself so that it can
+  be relayed between devices on your local network. We never read it, analyse it, or transmit it elsewhere.
+</p>
+
+<h3>3.1 Items processed</h3>
+<table>
+  <tr><th>Item</th><th>Purpose</th><th>Required?</th></tr>
+  <tr><td>Files or images you upload</td><td>Stored locally on the NAS for download on your other devices</td><td>Required for the file/image modes</td></tr>
+  <tr><td>Text you paste</td><td>Stored locally on the NAS for copying on your other devices</td><td>Required for the text mode</td></tr>
+  <tr><td>A title you type</td><td>Helps you recognise the item in a list</td><td>Optional</td></tr>
+  <tr><td>A temporary password you set</td><td>Adds an access barrier to the content</td><td>Optional</td></tr>
+  <tr><td>A retention period you choose</td><td>The item is deleted automatically when it elapses</td><td>Required</td></tr>
+</table>
+<p>
+  All of this is stored in the application data directory on your own NAS
+  (<code>/volume*/@appdata/com.zbc0315.tempcloud/</code>).
+  It <strong>never passes through our servers and never leaves your local network</strong>.
+</p>
+
+<h3>3.2 Storage and encryption (disclosed plainly)</h3>
+<ul>
+  <li>Uploaded files and images are stored <strong>as-is in their original binary form</strong>; the App does not encrypt them;</li>
+  <li>Text content is likewise recorded in plain text in the index file <code>items.json</code>;</li>
+  <li>Temporary passwords are <strong>never stored in plain text</strong>; only their SHA-256 digest is kept, for verification;</li>
+  <li>Access to the data directory is governed by the NAS system's own file permissions and accounts.</li>
+</ul>
+
+<h3>3.3 Access control</h3>
+<ul>
+  <li>Content protected by a temporary password requires that password before it can be viewed or downloaded;</li>
+  <li><strong>Content with no password can be viewed or downloaded by any user on the local network who can reach the application's address.</strong> Do not relay sensitive material through the App unless you set a temporary password;</li>
+  <li>Authentication for reaching the App is performed by the UGREEN gateway. The App itself creates no user accounts.</li>
+</ul>
+
+<h3>3.4 Retention and deletion</h3>
+<ul>
+  <li>Every item is <strong>deleted automatically</strong> when its retention period elapses (1 hour by default, 24 hours maximum), and its uploaded file is removed from disk at the same time;</li>
+  <li>You can erase everything immediately by uninstalling the App, which removes the application data directory;</li>
+  <li>The App keeps no historical copies and makes no cloud backups.</li>
+</ul>
+
+<h2>4. System permissions</h2>
+<p>
+  The App requests <strong>no</strong> sensitive system permissions — no photo library, contacts, location, camera,
+  microphone, or messages. It uses a single local network port (default <code>21039</code>) to serve HTTP.
+</p>
+<p>
+  The App follows least-privilege practice: it never requests permissions unrelated to a function in use,
+  and it never restricts core functionality because you declined an optional authorisation.
+</p>
+
+<h2>5. Third-party SDKs and components</h2>
+<p>
+  The App includes <strong>no third-party SDKs or components</strong>. There are no advertising, analytics, push,
+  social-sharing, or crash-reporting services, and therefore no personal information collection or sharing
+  associated with any of them.
+</p>
+<p>
+  The App's frontend loads no external fonts, scripts, or stylesheets, and works fully on a network with no
+  internet access.
+</p>
+
+<h2>6. Network and data transmission</h2>
+<ul>
+  <li>The App <strong>sends no data off the device</strong> and establishes no connection to us or to any third party;</li>
+  <li>It serves HTTP only within your NAS's local network, to relay content between your own devices;</li>
+  <li>If you reach the App remotely through UGREENlink, that link is provided by the UGOS system, and its encryption and transport rules are governed by UGREEN's own privacy policy.</li>
+</ul>
+
+<h2>7. Logging</h2>
+<p>To help diagnose operational problems, the App writes access logs to the NAS application log directory. Each entry contains only:</p>
+<ul>
+  <li>the HTTP method (e.g. <code>GET</code>, <code>POST</code>);</li>
+  <li>the request path (content IDs are randomly generated and carry no identity information);</li>
+  <li>the response status, response size in bytes, and handling time.</li>
+</ul>
+<p>
+  <strong>The logs record no IP address, no browser identifier, no query parameters, and no content body.</strong>
+  They are removed when the App is uninstalled.
+</p>
+
+<h2>8. Personal information lists ("three lists")</h2>
+<p>For distribution in the Chinese mainland, the required lists are as follows:</p>
+<table>
+  <tr><th>List</th><th>Content</th></tr>
+  <tr><td>Personal information collected</td><td><strong>None.</strong> The App collects no personal information.</td></tr>
+  <tr><td>Personal information shared</td><td><strong>None.</strong> The App shares, transfers, or discloses no personal information to any third party.</td></tr>
+  <tr><td>Third-party SDKs</td><td><strong>None.</strong> The App integrates no third-party SDK.</td></tr>
+</table>
+
+<h2>9. Data security measures</h2>
+<ul>
+  <li>Content is stored only on your own NAS; no cloud copy is produced;</li>
+  <li>Temporary passwords are held as digests, never in plain text;</li>
+  <li>Content expires and is deleted on the schedule you set, reducing long-term retention risk;</li>
+  <li>The App runs inside the isolation sandbox provided by UGOS and holds read/write access only to its own data directory;</li>
+  <li>The process keeps no background tasks and does not monopolise CPU, memory, or disk beyond what serving requests requires.</li>
+</ul>
+
+<h2>10. Your rights and how to exercise them</h2>
+<p>Because the App collects no personal information, there are no records for us to retrieve or correct on your behalf. For content you uploaded, you can exercise the following at any time:</p>
+<ul>
+  <li><strong>Access</strong> — view all unexpired content directly in the application interface;</li>
+  <li><strong>Deletion</strong> — uninstall the App to erase everything, or simply let the content expire;</li>
+  <li><strong>Withdrawal of consent</strong> — stop using and uninstall the App. No functionality is restricted as a result, because none of it depends on processing personal information;</li>
+  <li><strong>Complaints and enquiries</strong> — contact us using the details below.</li>
+</ul>
+
+<h2>11. Minors</h2>
+<p>
+  The App is a general-purpose local network file relay, is not designed for minors, and collects no age
+  information. Since it collects no personal information, no personal information processing scenario
+  involving minors arises. A guardian with a concern may contact us using the details below.
+</p>
+
+<h2>12. Changes to this policy</h2>
+<p>
+  If the App's functionality changes in a way that affects this policy, we will update the policy together
+  with the application update and notify users within the App. The version and effective date appear at the
+  top of this page. Continuing to use the App after an update constitutes acceptance of the revised policy.
+</p>
+
+<h2>13. Contact</h2>
+<p>For any question, comment, or complaint about this policy, contact us at:</p>
+<ul>
+  <li>Developer / operator: <code>zbc0315</code></li>
+  <li>Contact channel: <a href="https://github.com/zbc0315/temp-cloud/issues" rel="noopener">https://github.com/zbc0315/temp-cloud/issues</a></li>
+  <li>Project home: <a href="https://github.com/zbc0315/temp-cloud" rel="noopener">https://github.com/zbc0315/temp-cloud</a></li>
+</ul>
+<p>We will respond as soon as we can.</p>
+
+</main>
+
+<footer>
+  Temp Cloud · <code>com.zbc0315.tempcloud</code> · Privacy Policy v1.0 · 2026-09-20
+</footer>
+
+</body>
+</html>

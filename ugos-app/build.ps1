@@ -70,7 +70,7 @@ $GoExe = Resolve-Tool -Explicit $GoExe -EnvVarName "TEMPCLOUD_GO" -Command "go" 
 $UgcliExe = Resolve-Tool -Explicit $UgcliExe -EnvVarName "UGCLI" -Command "ugcli" `
     -Hint "Download ugcli from https://developer.ugnas.com/en/doc/tools/ugcli.html, or pass -UgcliExe / set UGCLI."
 
-Step "0/6 toolchain"
+Step "0/7 toolchain"
 & $GoExe version
 & $UgcliExe --version
 $goVersion = (& $GoExe version) -replace '^go version go([0-9]+\.[0-9]+).*', '$1'
@@ -81,17 +81,49 @@ if ($goVersion -notlike "1.26*") {
 }
 
 if ($SyncWeb) {
-    Step "1/6 re-seed src/web from ../public"
+    Step "1/7 re-seed src/web from ../public"
     python (Join-Path $Root "tools\sync_web.py")
     if ($LASTEXITCODE -ne 0) { throw "sync_web.py failed" }
 } else {
-    Step "1/6 web UI (using committed src/web; pass -SyncWeb to re-seed)"
+    Step "1/7 web UI (using committed src/web; pass -SyncWeb to re-seed)"
     Get-ChildItem (Join-Path $Src "web") -File | ForEach-Object {
         Write-Host ("  {0}  {1:N0} B" -f $_.Name, $_.Length)
     }
 }
 
-Step "2/6 gofmt + go vet"
+Step "2/7 privacy policy -> in-app copy and published copy"
+$privacySrc = Join-Path $Root "privacy\privacy.html"
+if (-not (Test-Path $privacySrc)) { throw "privacy policy not found: $privacySrc" }
+
+# The UGREEN review rules require the policy shown inside the application to
+# stay consistent with the published one, so both are copied from this single
+# source and then compared byte for byte.
+$privacyInApp = Join-Path $Src "web\privacy.html"
+Copy-Item $privacySrc $privacyInApp -Force
+
+# GitHub Pages serves the repository's /docs directory, which is where the
+# HTTPS link referenced by project.yaml resolves from.
+$repoRoot = Split-Path $Root -Parent
+$docsDir = Join-Path $repoRoot "docs"
+$privacyPublished = $null
+if (Test-Path (Join-Path $repoRoot ".git")) {
+    New-Item -ItemType Directory -Force -Path $docsDir | Out-Null
+    $privacyPublished = Join-Path $docsDir "privacy.html"
+    Copy-Item $privacySrc $privacyPublished -Force
+} else {
+    Write-Host "  not inside a git checkout; skipping the published copy" -ForegroundColor Yellow
+}
+
+$hashInApp = (Get-FileHash $privacyInApp -Algorithm SHA256).Hash
+Write-Host ("  in-app    {0}  {1:N0} B  {2}" -f $privacyInApp, (Get-Item $privacyInApp).Length, $hashInApp)
+if ($privacyPublished) {
+    $hashPublished = (Get-FileHash $privacyPublished -Algorithm SHA256).Hash
+    Write-Host ("  published {0}  {1:N0} B  {2}" -f $privacyPublished, (Get-Item $privacyPublished).Length, $hashPublished)
+    if ($hashInApp -ne $hashPublished) { throw "privacy policy copies differ; they must be identical" }
+    Write-Host "  both copies identical" -ForegroundColor Green
+}
+
+Step "3/7 gofmt + go vet"
 Push-Location $Src
 try {
     $unformatted = & $GoExe fmt ./...
@@ -101,7 +133,7 @@ try {
 }
 finally { Pop-Location }
 
-Step "3/6 build linux/amd64 backend"
+Step "4/7 build linux/amd64 backend"
 $env:GOOS = "linux"; $env:GOARCH = "amd64"; $env:CGO_ENABLED = "0"
 $binDir = Join-Path $Root "rootfs_amd64\bin"
 New-Item -ItemType Directory -Force -Path $binDir | Out-Null
@@ -115,7 +147,7 @@ finally { Pop-Location }
 Remove-Item Env:GOOS, Env:GOARCH, Env:CGO_ENABLED -ErrorAction SilentlyContinue
 Write-Host ("  {0}  {1:N1} KiB" -f $binPath, ((Get-Item $binPath).Length / 1KB))
 
-Step "4/6 sync web UI into rootfs_common/www"
+Step "5/7 sync web UI into rootfs_common/www"
 $www = Join-Path $Root "rootfs_common\www"
 if (Test-Path $www) { Remove-Item $www -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $www | Out-Null
@@ -124,11 +156,11 @@ Get-ChildItem $www -Recurse -File | ForEach-Object {
     Write-Host ("  {0}  {1:N0} B" -f $_.Name, $_.Length)
 }
 
-Step "5/6 generate application icon"
+Step "6/7 generate application icon"
 python (Join-Path $Root "tools\make_icon.py")
 if ($LASTEXITCODE -ne 0) { throw "icon generation failed" }
 
-Step "6/6 ugcli check"
+Step "7/7 ugcli check"
 Push-Location $Root
 try {
     & $UgcliExe check

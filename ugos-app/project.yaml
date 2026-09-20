@@ -52,6 +52,12 @@ license_agreement_link:
 technical_support_link:
   - https://github.com/zbc0315/temp-cloud/issues
 
+# Required for listing: standard HTTPS, directly reachable static page, no
+# login or redirect. Served by GitHub Pages from the repository's /docs folder
+# and kept byte-identical to the copy shipped inside the application.
+privacy_policy_link:
+  - https://zbc0315.github.io/temp-cloud/privacy.html
+
 i18n:
   en-US:
     name: Temp Cloud
