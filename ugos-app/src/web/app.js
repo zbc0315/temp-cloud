@@ -855,6 +855,181 @@ passwordForm.addEventListener("submit", async (event) => {
   setStatus(passwordStatus, t("lookupSuccess"), "ok");
 });
 
+/* --- the colour field: a slow flock --------------------------------------
+   The four colour masses drift so the glass always has something changing to
+   refract. The motion is a small flocking model rather than four elements
+   easing between fixed points, which is what makes it read as alive:
+
+     wander      two incommensurate sines per axis, so the path never repeats
+     cohesion    a weak pull toward the flock's centre of mass
+     separation  a push away from a neighbour that drifts too close
+     home        a weak pull back toward this blob's own patch of the column,
+                 which is what keeps colour behind the panels
+
+   Only position is animated, on purpose. The text contrast was solved against
+   the composited panel, so opacity has to stay exactly as the stylesheet
+   declares it.
+
+   The stylesheet remains the single source of truth for the composition: each
+   blob's starting rect is read from the DOM and becomes its home, so the
+   animation drifts around the layout that was designed and audited rather than
+   around positions invented here. */
+
+function startColourField() {
+  const field = document.querySelector(".field");
+  if (!field) return;
+
+  const nodes = Array.from(field.querySelectorAll(".blob"));
+  if (!nodes.length) return;
+
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+
+  const clamp = (value, low, high) => Math.min(Math.max(value, low), high);
+
+  const agents = nodes.map((node, index) => {
+    const box = node.getBoundingClientRect();
+    const x = (box.left + box.width / 2) / width;
+    const y = (box.top + box.height / 2) / height;
+    return {
+      node,
+      w: box.width,
+      h: box.height,
+      x,
+      y,
+      vx: 0,
+      vy: 0,
+      // Home stays a little inside the viewport so a blob can never wander off
+      // and leave a panel sitting over a flat background.
+      home: { x: clamp(x, 0.2, 0.8), y: clamp(y, 0.12, 0.85) },
+      // Desynchronises the wander so the four never move in lockstep.
+      phase: index * 1.7
+    };
+  });
+
+  // Take over positioning. The stylesheet's offsets are the static field and
+  // have just been read; from here the same places are expressed as transforms
+  // so they can be composited instead of laid out.
+  for (const agent of agents) {
+    agent.node.style.left = "0";
+    agent.node.style.top = "0";
+    agent.node.style.right = "auto";
+    agent.node.style.bottom = "auto";
+    place(agent);
+  }
+
+  function place(agent) {
+    const left = agent.x * width - agent.w / 2;
+    const top = agent.y * height - agent.h / 2;
+    agent.node.style.transform = `translate3d(${left.toFixed(2)}px, ${top.toFixed(2)}px, 0)`;
+  }
+
+  const WANDER = 0.012;        // acceleration, in viewport widths per second^2
+  const HOME_PULL = 0.16;      // spring constant toward the blob's own patch
+  const COHESION = 0.03;       // spring constant toward the flock
+  const SEPARATION = 0.26;     // radius below which neighbours push apart
+  const SEPARATION_PUSH = 0.10;
+  const DAMPING = 1.0;         // per second
+  const MAX_SPEED = 0.05;      // viewport widths per second, a safety cap only
+
+  let clock = 0;
+
+  function step(dt) {
+    clock += dt;
+
+    let centreX = 0;
+    let centreY = 0;
+    for (const agent of agents) {
+      centreX += agent.x;
+      centreY += agent.y;
+    }
+    centreX /= agents.length;
+    centreY /= agents.length;
+
+    for (const agent of agents) {
+      const wanderX =
+        Math.sin(clock * 0.11 + agent.phase) + 0.5 * Math.sin(clock * 0.043 + agent.phase * 2.3);
+      const wanderY =
+        Math.cos(clock * 0.083 + agent.phase * 1.4) + 0.5 * Math.cos(clock * 0.037 + agent.phase * 0.7);
+
+      let ax = wanderX * WANDER + (agent.home.x - agent.x) * HOME_PULL;
+      let ay = wanderY * WANDER + (agent.home.y - agent.y) * HOME_PULL;
+
+      ax += (centreX - agent.x) * COHESION;
+      ay += (centreY - agent.y) * COHESION;
+
+      for (const other of agents) {
+        if (other === agent) continue;
+        const dx = agent.x - other.x;
+        const dy = agent.y - other.y;
+        const distanceSquared = dx * dx + dy * dy;
+        if (distanceSquared >= SEPARATION * SEPARATION || distanceSquared === 0) continue;
+        const distance = Math.sqrt(distanceSquared);
+        const push = (1 - distance / SEPARATION) * SEPARATION_PUSH;
+        ax += (dx / distance) * push;
+        ay += (dy / distance) * push;
+      }
+
+      agent.vx += ax * dt;
+      agent.vy += ay * dt;
+
+      const damping = Math.exp(-DAMPING * dt);
+      agent.vx *= damping;
+      agent.vy *= damping;
+
+      const speed = Math.hypot(agent.vx, agent.vy);
+      if (speed > MAX_SPEED) {
+        agent.vx = (agent.vx / speed) * MAX_SPEED;
+        agent.vy = (agent.vy / speed) * MAX_SPEED;
+      }
+
+      agent.x += agent.vx * dt;
+      agent.y += agent.vy * dt;
+    }
+
+    for (const agent of agents) place(agent);
+  }
+
+  let frameHandle = 0;
+  let previous = 0;
+
+  function tick(now) {
+    frameHandle = window.requestAnimationFrame(tick);
+    if (!previous) {
+      previous = now;
+      return;
+    }
+    // Clamped so a backgrounded tab does not resume with one huge jump.
+    const dt = Math.min((now - previous) / 1000, 0.05);
+    previous = now;
+    if (dt > 0) step(dt);
+  }
+
+  function sync() {
+    const wanted = !reducedMotion.matches && !document.hidden;
+    if (wanted === Boolean(frameHandle)) return;
+    if (wanted) {
+      previous = 0;
+      frameHandle = window.requestAnimationFrame(tick);
+    } else {
+      window.cancelAnimationFrame(frameHandle);
+      frameHandle = 0;
+    }
+  }
+
+  window.addEventListener("resize", () => {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    for (const agent of agents) place(agent);
+  });
+  document.addEventListener("visibilitychange", sync);
+  if (reducedMotion.addEventListener) reducedMotion.addEventListener("change", sync);
+
+  sync();
+}
+
 /* --- chrome --------------------------------------------------------------- */
 
 document.getElementById("refresh-public").addEventListener("click", () => {
@@ -887,6 +1062,7 @@ themeToggle.addEventListener("click", () => {
 });
 
 applyI18n();
+startColourField();
 setProtectedSectionVisible(false);
 renderEmpty(protectedList, t("empty"));
 
