@@ -1,140 +1,179 @@
 const messages = {
   zh: {
-    heroEyebrow: "Local Temporary Transfer",
-    heroLead: "在局域网内临时中转文件、文字和图片。默认保存 1 小时，最长 24 小时。",
-    heroNotePublic: "无密码内容可直接查看",
-    heroNoteProtected: "有密码内容输入密码后显示",
-    heroNoteExpire: "到期自动清理",
-    themeLight: "暗色",
-    themeDark: "亮色",
-    tabUpload: "上传与粘贴",
-    tabDownload: "下载与复制",
-    uploadTitle: "上传与粘贴",
-    uploadDesc: "支持文件、文本和图片剪贴板",
-    downloadTitle: "下载与复制",
-    downloadDesc: "无密码内容默认显示，有密码内容需要输入密码",
-    kindFile: "文件",
-    kindText: "文本",
-    kindImage: "图片",
-    fieldTitle: "标题（可选）",
-    fieldText: "文本内容",
-    fieldPassword: "临时密码（可留空）",
+    brandStatus: "到期自动清理",
+    themeToDark: "深色",
+    themeToLight: "浅色",
+
+    composerTitle: "粘贴、拖入，或点按添加内容",
+    composerHint: "文本 · 图片 · 文件，都放在这里",
+    composerPlaceholder: "也可以直接在这里输入或粘贴文字…",
+    composerLabel: "要中转的内容",
+    toolFile: "选择文件",
+    toolScreenshot: "截图",
+
+    fieldTitle: "标题",
+    fieldPassword: "临时密码",
     fieldExpire: "保存时间",
-    placeholderTitle: "例如：设计稿、验证码、截图",
-    placeholderText: "在这里粘贴文字内容",
-    placeholderPassword: "留空即为无密码模式",
-    placeholderLookupPassword: "输入密码查看对应内容",
-    filePrompt: "选择文件或拖拽到这里",
-    imagePrompt: "粘贴图片、拖拽图片或点击选择",
+    placeholderTitle: "可选，例如：设计稿、验证码",
+    placeholderPassword: "留空即无密码",
     save: "保存",
-    view: "查看",
-    refresh: "刷新",
-    protectedSectionTitle: "密码内容",
-    publicSectionTitle: "无密码内容",
-    protectedCaptionDefault: "输入密码后显示",
-    empty: "暂无内容",
-    copyText: "复制文本",
-    copyImage: "复制图片",
-    downloadFile: "下载文件",
-    downloadImage: "下载图片",
-    copiedText: "已复制到剪贴板",
-    copiedImage: "已复制图片到剪贴板",
-    unsupportedCopy: "当前浏览器不支持自动复制，请手动复制",
-    unsupportedImageCopy: "当前浏览器不支持直接复制图片，请使用下载图片",
-    loadFailed: "加载失败",
-    imagePreviewFailed: "图片预览加载失败",
-    readFailed: "读取内容失败",
-    selectImageFirst: "请先选择或粘贴图片",
-    selectFileFirst: "请先选择文件",
-    saving: "正在保存...",
-    saveSuccess: "保存成功",
+    saving: "正在保存…",
+    saveSuccess: "已保存，可在下方列表中取用",
+    saveSuccessProtected: "已保存，输入临时密码即可查看",
     saveFailed: "保存失败",
+    emptyComposer: "请先输入文字，或添加一个文件、一张图片",
+    bothKinds: "一次只能保存一种内容：请移除附件，或清空上面的文字",
+    hourUnit: "{count} 小时",
+
+    attachImage: "图片",
+    attachFile: "文件",
+    attachJustNow: "刚刚添加",
+    attachRemove: "移除",
+    clipboardImageName: "剪贴板图片",
+    screenshotPrefix: "屏幕截图",
+    screenshotFailed: "截图失败",
+    screenshotCancelled: "已取消截图",
+    screenshotNeedsSecure:
+      "当前是 HTTP 访问，浏览器不允许网页截图。按 Win+Shift+S 截图，然后在这里按 Ctrl+V 粘贴即可。",
+    screenshotUnsupported: "当前浏览器不支持网页截图，请用系统截图后粘贴。",
+
+    protectedSectionTitle: "密码内容",
+    protectedCaptionDefault: "输入密码后显示",
+    protectedCaptionCount: "当前显示该密码下的 {count} 项内容",
+    lookupLabel: "临时密码",
+    placeholderLookupPassword: "输入密码查看对应内容",
+    view: "查看",
     enterPassword: "请输入密码",
-    lookingUp: "正在查询...",
+    lookingUp: "正在查询…",
     lookupFailed: "查询失败",
     noMatch: "没有匹配内容",
     lookupSuccess: "查询成功",
-    protectedCaptionCount: "当前显示该密码下的 {count} 项内容",
+
+    publicSectionTitle: "无密码内容",
+    refresh: "刷新",
+    empty: "暂无内容",
+    loadFailed: "加载失败",
+    initFailed: "初始化失败",
+    readFailed: "读取内容失败",
+    imagePreviewFailed: "图片加载失败",
+
     itemKindText: "文本",
     itemKindImage: "图片",
     itemKindFile: "文件",
     itemUntitled: "未命名内容",
     itemExpire: "到期 {time}",
     itemCreated: "创建 {time}",
-    hourUnit: "{count} 小时",
-    initFailed: "初始化失败",
-    clipboardImageName: "剪贴板图片"
+
+    copyText: "复制",
+    copyImage: "复制图片",
+    downloadFile: "下载",
+    downloadImage: "下载",
+    copiedText: "已复制到剪贴板",
+    copiedImage: "已复制图片到剪贴板",
+    unsupportedCopy: "当前浏览器不支持自动复制，请手动复制",
+    unsupportedImageCopy: "当前浏览器不支持直接复制图片，请改用下载"
   },
   en: {
-    heroEyebrow: "Local Temporary Transfer",
-    heroLead: "Temporary transfer for files, text, and images across your LAN. Default retention is 1 hour, up to 24 hours.",
-    heroNotePublic: "Public items are visible immediately",
-    heroNoteProtected: "Protected items appear after password lookup",
-    heroNoteExpire: "Expired content is removed automatically",
-    themeLight: "Dark",
-    themeDark: "Light",
-    tabUpload: "Upload & Paste",
-    tabDownload: "Download & Copy",
-    uploadTitle: "Upload & Paste",
-    uploadDesc: "Supports files, text snippets, and image clipboard",
-    downloadTitle: "Download & Copy",
-    downloadDesc: "Public content is shown by default. Protected content requires a password.",
-    kindFile: "File",
-    kindText: "Text",
-    kindImage: "Image",
-    fieldTitle: "Title (optional)",
-    fieldText: "Text content",
-    fieldPassword: "Temporary password (optional)",
+    brandStatus: "Expires automatically",
+    themeToDark: "Dark",
+    themeToLight: "Light",
+
+    composerTitle: "Paste, drop, or tap to add",
+    composerHint: "Text, images and files all go here",
+    composerPlaceholder: "Or just type and paste text right here…",
+    composerLabel: "Content to transfer",
+    toolFile: "Choose file",
+    toolScreenshot: "Screenshot",
+
+    fieldTitle: "Title",
+    fieldPassword: "Temporary password",
     fieldExpire: "Retention",
-    placeholderTitle: "For example: design draft, code, screenshot",
-    placeholderText: "Paste text here",
+    placeholderTitle: "Optional, e.g. design draft or code",
     placeholderPassword: "Leave empty for public mode",
-    placeholderLookupPassword: "Enter password to view matched content",
-    filePrompt: "Choose a file or drag it here",
-    imagePrompt: "Paste, drag, or choose an image",
     save: "Save",
-    view: "View",
-    refresh: "Refresh",
-    protectedSectionTitle: "Protected Content",
-    publicSectionTitle: "Public Content",
-    protectedCaptionDefault: "Shown after password lookup",
-    empty: "No content yet",
-    copyText: "Copy Text",
-    copyImage: "Copy Image",
-    downloadFile: "Download File",
-    downloadImage: "Download Image",
-    copiedText: "Copied to clipboard",
-    copiedImage: "Image copied to clipboard",
-    unsupportedCopy: "Automatic copy is not supported in this browser. Please copy manually.",
-    unsupportedImageCopy: "Direct image copy is not supported in this browser. Please download the image.",
-    loadFailed: "Load failed",
-    imagePreviewFailed: "Failed to load image preview",
-    readFailed: "Failed to read content",
-    selectImageFirst: "Select or paste an image first",
-    selectFileFirst: "Select a file first",
-    saving: "Saving...",
-    saveSuccess: "Saved successfully",
+    saving: "Saving…",
+    saveSuccess: "Saved — pick it up from the list below",
+    saveSuccessProtected: "Saved — enter the temporary password to view it",
     saveFailed: "Save failed",
+    emptyComposer: "Type something, or add a file or an image first",
+    bothKinds: "One item at a time: remove the attachment, or clear the text above",
+    hourUnit: "{count} hour(s)",
+
+    attachImage: "Image",
+    attachFile: "File",
+    attachJustNow: "just added",
+    attachRemove: "Remove",
+    clipboardImageName: "Clipboard image",
+    screenshotPrefix: "Screenshot",
+    screenshotFailed: "Screenshot failed",
+    screenshotCancelled: "Screenshot cancelled",
+    screenshotNeedsSecure:
+      "This page is served over HTTP, so the browser will not let a web page capture the screen. Press Win+Shift+S, then paste here with Ctrl+V.",
+    screenshotUnsupported:
+      "This browser cannot capture the screen. Take a system screenshot and paste it here.",
+
+    protectedSectionTitle: "Protected content",
+    protectedCaptionDefault: "Shown after password lookup",
+    protectedCaptionCount: "{count} item(s) matched this password",
+    lookupLabel: "Temporary password",
+    placeholderLookupPassword: "Enter password to view matched content",
+    view: "View",
     enterPassword: "Please enter a password",
-    lookingUp: "Looking up...",
+    lookingUp: "Looking up…",
     lookupFailed: "Lookup failed",
     noMatch: "No matched content",
     lookupSuccess: "Lookup succeeded",
-    protectedCaptionCount: "{count} protected item(s) matched this password",
+
+    publicSectionTitle: "Public content",
+    refresh: "Refresh",
+    empty: "Nothing here yet",
+    loadFailed: "Load failed",
+    initFailed: "Initialization failed",
+    readFailed: "Failed to read content",
+    imagePreviewFailed: "Failed to load the image",
+
     itemKindText: "Text",
     itemKindImage: "Image",
     itemKindFile: "File",
     itemUntitled: "Untitled",
     itemExpire: "Expires {time}",
     itemCreated: "Created {time}",
-    hourUnit: "{count} hour(s)",
-    initFailed: "Initialization failed",
-    clipboardImageName: "Clipboard image"
+
+    copyText: "Copy",
+    copyImage: "Copy image",
+    downloadFile: "Download",
+    downloadImage: "Download",
+    copiedText: "Copied to clipboard",
+    copiedImage: "Image copied to clipboard",
+    unsupportedCopy: "This browser cannot copy automatically. Please copy manually.",
+    unsupportedImageCopy: "This browser cannot copy images directly. Please download it instead."
   }
 };
 
+// Storage can throw outright when the browser has it disabled. Preferences are
+// a convenience, not a requirement, so a failure falls back to the default
+// rather than taking the whole page down before it renders.
+function stored(key, fallback) {
+  try {
+    return localStorage.getItem(key) || fallback;
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function persist(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    /* The preference is simply not remembered. */
+  }
+}
+
+// `*=` rather than `$=`: the packaging step appends a content hash to the URL
+// (app.js?v=...) so an upgraded application is never served against a bundle a
+// browser cached 30 days ago, and `$=` would stop matching that suffix.
 const APP_BASE = (() => {
-  const el = document.querySelector('script[src$="app.js"]') || document.currentScript;
+  const el = document.querySelector('script[src*="app.js"]') || document.currentScript;
   if (el && el.src) return new URL("./", el.src);
   return new URL("./", document.baseURI);
 })();
@@ -160,28 +199,30 @@ function uploadErrorMessage(status) {
 }
 
 const state = {
-  currentKind: "file",
-  currentSection: "upload",
-  imageFile: null,
-  language: localStorage.getItem("temp-cloud-language") || "zh",
-  theme: localStorage.getItem("temp-cloud-theme") || "light"
+  language: stored("temp-cloud-language", "zh"),
+  theme: stored("temp-cloud-theme", "") || defaultTheme(),
+  attachment: null,
+  saving: false
 };
 
-const uploadForm = document.getElementById("upload-form");
-const passwordForm = document.getElementById("password-form");
-const publicList = document.getElementById("public-list");
-const protectedList = document.getElementById("protected-list");
-const protectedSection = document.getElementById("protected-section");
-const formStatus = document.getElementById("form-status");
-const passwordStatus = document.getElementById("password-status");
-const protectedCaption = document.getElementById("protected-caption");
-const expiresHoursSelect = document.getElementById("expires-hours");
-const itemTemplate = document.getElementById("item-template");
+const composer = document.getElementById("composer");
+const composerInput = document.getElementById("composer-input");
+const attachmentList = document.getElementById("attachment-list");
 const fileInput = document.getElementById("file-input");
-const imageInput = document.getElementById("image-input");
-const fileName = document.getElementById("file-name");
-const imageName = document.getElementById("image-name");
-const imagePreview = document.getElementById("image-preview");
+const pickFileButton = document.getElementById("pick-file");
+const screenshotButton = document.getElementById("screenshot");
+const titleInput = document.getElementById("title-input");
+const passwordInput = document.getElementById("password-input");
+const expiresHoursSelect = document.getElementById("expires-hours");
+const saveButton = document.getElementById("save");
+const formStatus = document.getElementById("composer-status");
+const passwordForm = document.getElementById("password-form");
+const passwordStatus = document.getElementById("password-status");
+const protectedSection = document.getElementById("protected-section");
+const protectedList = document.getElementById("protected-list");
+const protectedCaption = document.getElementById("protected-caption");
+const publicList = document.getElementById("public-list");
+const itemTemplate = document.getElementById("item-template");
 const languageToggle = document.getElementById("language-toggle");
 const themeToggle = document.getElementById("theme-toggle");
 
@@ -194,14 +235,55 @@ function t(key, vars = {}) {
   return value;
 }
 
-function setStatus(el, message, isError = false) {
+// Follow the system when the user has never made an explicit choice, which is
+// what an Apple-style interface is expected to do.
+function defaultTheme() {
+  try {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  } catch (error) {
+    return "light";
+  }
+}
+
+// tone: true/"error" marks a failure, "ok" marks a success, anything else is a
+// neutral progress message.
+function setStatus(el, message, tone = "") {
   el.textContent = message || "";
-  el.style.color = isError ? "#c14d4d" : "";
+  el.classList.toggle("is-error", tone === true || tone === "error");
+  el.classList.toggle("is-ok", tone === "ok");
+}
+
+// The UGOS gateway answers an oversized upload with an HTML 413 page and some
+// failures with a plain-text 500, so a body that is not JSON is a normal
+// outcome here, not an exceptional one. Without this the user would be shown a
+// raw "Unexpected token '<'" parser message instead of something actionable.
+async function readJSON(res) {
+  try {
+    return await res.json();
+  } catch (error) {
+    return null;
+  }
+}
+
+function toast(message) {
+  let el = document.getElementById("toast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "toast";
+    el.className = "toast";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "polite");
+    document.body.appendChild(el);
+  }
+  el.textContent = message;
+  el.classList.add("show");
+  window.clearTimeout(toast.timer);
+  toast.timer = window.setTimeout(() => el.classList.remove("show"), 2200);
 }
 
 function updateTheme() {
   document.body.dataset.theme = state.theme;
-  themeToggle.textContent = state.theme === "light" ? t("themeLight") : t("themeDark");
+  themeToggle.textContent = state.theme === "light" ? t("themeToDark") : t("themeToLight");
 }
 
 function applyI18n() {
@@ -213,7 +295,11 @@ function applyI18n() {
   document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
     node.placeholder = t(node.dataset.i18nPlaceholder);
   });
+  document.querySelectorAll("[data-i18n-aria]").forEach((node) => {
+    node.setAttribute("aria-label", t(node.dataset.i18nAria));
+  });
   updateTheme();
+  renderAttachment();
 }
 
 function formatTime(value) {
@@ -231,6 +317,12 @@ function formatSize(size = 0) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function firstLine(text, max = 48) {
+  const line = String(text).split(/\r?\n/).find((part) => part.trim()) || "";
+  const trimmed = line.trim();
+  return trimmed.length > max ? `${trimmed.slice(0, max)}…` : trimmed;
+}
+
 function fileDownloadUrl(item, token) {
   const url = new URL(`api/files/${item.id}`, APP_BASE);
   if (token) url.searchParams.set("token", token);
@@ -239,40 +331,340 @@ function fileDownloadUrl(item, token) {
 
 async function loadConfig() {
   const res = await fetch(apiUrl("api/config"));
-  const data = await res.json();
+  const data = await readJSON(res);
+  if (!res.ok || !data) throw new Error(t("initFailed"));
+  const previous = expiresHoursSelect.value;
   expiresHoursSelect.innerHTML = "";
   for (let i = 1; i <= data.maxExpireHours; i += 1) {
     const option = document.createElement("option");
     option.value = String(i);
     option.textContent = t("hourUnit", { count: i });
-    if (i === data.defaultExpireHours) option.selected = true;
+    if (String(i) === previous || (!previous && i === data.defaultExpireHours)) {
+      option.selected = true;
+    }
     expiresHoursSelect.appendChild(option);
   }
 }
 
-function switchKind(kind) {
-  state.currentKind = kind;
-  document.querySelectorAll("#kind-tabs .tab").forEach((tab) => {
-    tab.classList.toggle("active", tab.dataset.kind === kind);
-  });
-  document.querySelectorAll(".kind-panel").forEach((panel) => {
-    panel.classList.toggle("active", panel.id === `${kind}-panel`);
-  });
+/* --- the composer's single attachment ------------------------------------
+   Text, an image and a file are all "content", but the backend stores exactly
+   one payload per item, so the box holds at most one attachment. Kind is
+   inferred from the file itself: no tabs, no type picker. */
+
+function attachmentKind(file) {
+  return (file.type || "").startsWith("image/") ? "image" : "file";
 }
 
-function switchSection(section) {
-  state.currentSection = section;
-  document.querySelectorAll("#section-tabs .tab").forEach((tab) => {
-    tab.classList.toggle("active", tab.dataset.section === section);
-  });
-  document.querySelectorAll(".section-panel").forEach((panel) => {
-    panel.classList.toggle("active", panel.id === `${section}-section`);
-  });
+function setAttachment(file) {
+  clearAttachment();
+  if (!file) return;
+
+  const isImage = attachmentKind(file) === "image";
+  state.attachment = {
+    file,
+    isImage,
+    name: file.name || t("clipboardImageName"),
+    size: file.size || 0,
+    url: isImage ? URL.createObjectURL(file) : ""
+  };
+  renderAttachment();
 }
+
+function clearAttachment() {
+  if (state.attachment?.url) URL.revokeObjectURL(state.attachment.url);
+  state.attachment = null;
+  renderAttachment();
+}
+
+// Built with createElement rather than innerHTML: the file name comes from the
+// user and must never be parsed as markup.
+function renderAttachment() {
+  attachmentList.innerHTML = "";
+  const item = state.attachment;
+  if (!item) return;
+
+  const row = document.createElement("div");
+  row.className = "attached";
+
+  if (item.isImage) {
+    const thumb = document.createElement("img");
+    thumb.className = "attached-thumb";
+    thumb.src = item.url;
+    thumb.alt = "";
+    row.appendChild(thumb);
+  } else {
+    const badge = document.createElement("span");
+    badge.className = "attached-badge";
+    badge.textContent = t("attachFile");
+    row.appendChild(badge);
+  }
+
+  const main = document.createElement("div");
+  main.className = "attached-main";
+
+  const name = document.createElement("p");
+  name.className = "attached-name";
+  name.textContent = item.name;
+
+  const meta = document.createElement("p");
+  meta.className = "attached-meta";
+  meta.textContent = [
+    item.isImage ? t("attachImage") : t("attachFile"),
+    formatSize(item.size),
+    t("attachJustNow")
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  main.append(name, meta);
+
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "attached-x";
+  remove.setAttribute("aria-label", t("attachRemove"));
+  remove.innerHTML =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  remove.addEventListener("click", () => {
+    clearAttachment();
+    composerInput.focus();
+  });
+
+  row.append(main, remove);
+  attachmentList.appendChild(row);
+}
+
+/* --- getting content in: paste, drop, picker, screenshot ------------------ */
+
+// Paste works anywhere on the page, not only while the textarea has focus, so
+// "copy on one device, paste here" needs no aiming.
+window.addEventListener("paste", (event) => {
+  const items = Array.from(event.clipboardData?.items || []);
+  const fileItem = items.find((entry) => entry.kind === "file");
+  if (fileItem) {
+    const file = fileItem.getAsFile();
+    if (file) {
+      event.preventDefault();
+      setAttachment(file);
+      setStatus(formStatus, "");
+      return;
+    }
+  }
+
+  if (event.target === composerInput) return;
+  const text = event.clipboardData?.getData("text/plain");
+  if (!text) return;
+  event.preventDefault();
+  composerInput.value = composerInput.value ? `${composerInput.value}\n${text}` : text;
+  composerInput.focus();
+});
+
+function firstFile(list) {
+  return Array.from(list || []).find((file) => file && file.size >= 0) || null;
+}
+
+composer.addEventListener("dragenter", (event) => {
+  event.preventDefault();
+  composer.classList.add("is-over");
+});
+composer.addEventListener("dragover", (event) => {
+  event.preventDefault();
+  composer.classList.add("is-over");
+});
+composer.addEventListener("dragleave", (event) => {
+  if (composer.contains(event.relatedTarget)) return;
+  composer.classList.remove("is-over");
+});
+composer.addEventListener("drop", (event) => {
+  event.preventDefault();
+  composer.classList.remove("is-over");
+  const file = firstFile(event.dataTransfer?.files);
+  if (file) {
+    setAttachment(file);
+    setStatus(formStatus, "");
+  }
+});
+
+// A drop anywhere else would make the browser navigate away and lose whatever
+// has already been typed, so the default is suppressed document-wide.
+["dragover", "drop"].forEach((name) => {
+  document.addEventListener(name, (event) => {
+    if (composer.contains(event.target)) return;
+    event.preventDefault();
+  });
+});
+
+pickFileButton.addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", () => {
+  const file = fileInput.files?.[0];
+  fileInput.value = "";
+  if (!file) return;
+  setAttachment(file);
+  setStatus(formStatus, "");
+});
+
+function screenshotName() {
+  const now = new Date();
+  const pad = (value) => String(value).padStart(2, "0");
+  const stamp =
+    [now.getFullYear(), pad(now.getMonth() + 1), pad(now.getDate())].join("-") +
+    ` ${pad(now.getHours())}.${pad(now.getMinutes())}.${pad(now.getSeconds())}`;
+  return `${t("screenshotPrefix")} ${stamp}.png`;
+}
+
+// Screen capture needs a secure context. Over plain HTTP the browser does not
+// expose getDisplayMedia at all, so that case is reported as a hint rather than
+// as a failure - Win+Shift+S followed by a paste still gets the image in.
+async function captureScreen() {
+  const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+  const video = document.createElement("video");
+  video.muted = true;
+  video.playsInline = true;
+  video.style.cssText = "position:fixed;left:-10000px;top:0;width:1px;height:1px;opacity:0";
+  video.srcObject = stream;
+  document.body.appendChild(video);
+
+  try {
+    await new Promise((resolve, reject) => {
+      video.addEventListener("loadedmetadata", resolve, { once: true });
+      video.addEventListener("error", () => reject(new Error(t("screenshotFailed"))), {
+        once: true
+      });
+    });
+    await video.play();
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blob) throw new Error(t("screenshotFailed"));
+    return new File([blob], screenshotName(), { type: "image/png" });
+  } finally {
+    stream.getTracks().forEach((track) => track.stop());
+    video.remove();
+  }
+}
+
+screenshotButton.addEventListener("click", async () => {
+  if (!navigator.mediaDevices?.getDisplayMedia) {
+    // A coarse pointer means a phone or tablet, where the system screenshot
+    // flow is the only one available.
+    const coarse = window.matchMedia?.("(pointer: coarse)").matches;
+    setStatus(
+      formStatus,
+      window.isSecureContext || coarse ? t("screenshotUnsupported") : t("screenshotNeedsSecure"),
+      true
+    );
+    composerInput.focus();
+    return;
+  }
+
+  screenshotButton.disabled = true;
+  setStatus(formStatus, "");
+  try {
+    const file = await captureScreen();
+    setAttachment(file);
+  } catch (error) {
+    const cancelled = error?.name === "NotAllowedError" || error?.name === "AbortError";
+    setStatus(
+      formStatus,
+      cancelled ? t("screenshotCancelled") : error.message || t("screenshotFailed"),
+      !cancelled
+    );
+  } finally {
+    screenshotButton.disabled = false;
+  }
+});
+
+/* --- saving --------------------------------------------------------------- */
+
+async function saveComposer() {
+  if (state.saving) return;
+
+  const text = composerInput.value;
+  const hasText = text.trim() !== "";
+  const attachment = state.attachment;
+
+  if (attachment && hasText) {
+    setStatus(formStatus, t("bothKinds"), true);
+    return;
+  }
+  if (!attachment && !hasText) {
+    setStatus(formStatus, t("emptyComposer"), true);
+    composerInput.focus();
+    return;
+  }
+
+  const formData = new FormData();
+  formData.set("title", titleInput.value);
+  formData.set("password", passwordInput.value);
+  formData.set("expiresHours", expiresHoursSelect.value || "1");
+
+  if (attachment) {
+    formData.set("kind", attachment.isImage ? "image" : "file");
+    formData.set("file", attachment.file, attachment.name);
+  } else {
+    formData.set("kind", "text");
+    formData.set("text", text);
+  }
+
+  const hadPassword = passwordInput.value.trim() !== "";
+
+  state.saving = true;
+  saveButton.disabled = true;
+  setStatus(formStatus, t("saving"));
+
+  try {
+    const res = await fetch(apiUrl("api/items"), {
+      method: "POST",
+      body: formData
+    });
+    const data = (await readJSON(res)) || {};
+    if (!res.ok) {
+      setStatus(formStatus, data.error || uploadErrorMessage(res.status), true);
+      return;
+    }
+
+    composerInput.value = "";
+    titleInput.value = "";
+    passwordInput.value = "";
+    clearAttachment();
+    setStatus(formStatus, hadPassword ? t("saveSuccessProtected") : t("saveSuccess"), "ok");
+    // The item is already stored, so a failure to reload the list must not be
+    // reported as a failed save.
+    try {
+      await refreshPublicItems();
+    } catch (error) {
+      /* Keep the success message. */
+    }
+  } catch (error) {
+    setStatus(formStatus, error.message || t("saveFailed"), true);
+  } finally {
+    state.saving = false;
+    saveButton.disabled = false;
+  }
+}
+
+saveButton.addEventListener("click", saveComposer);
+
+composerInput.addEventListener("keydown", (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+    event.preventDefault();
+    saveComposer();
+  }
+});
+
+/* --- reading -------------------------------------------------------------- */
 
 function renderEmpty(container, text) {
-  container.className = "item-list empty";
-  container.textContent = text;
+  container.innerHTML = "";
+  const empty = document.createElement("p");
+  empty.className = "empty";
+  empty.textContent = text;
+  container.appendChild(empty);
 }
 
 function setProtectedSectionVisible(visible) {
@@ -282,6 +674,7 @@ function setProtectedSectionVisible(visible) {
 function createActionButton(label, onClick) {
   const button = document.createElement("button");
   button.type = "button";
+  button.className = "row-action";
   button.textContent = label;
   button.addEventListener("click", onClick);
   return button;
@@ -299,9 +692,7 @@ function copyTextLegacy(text) {
   textarea.select();
   const success = document.execCommand("copy");
   document.body.removeChild(textarea);
-  if (!success) {
-    throw new Error(t("unsupportedCopy"));
-  }
+  if (!success) throw new Error(t("unsupportedCopy"));
 }
 
 async function copyText(text) {
@@ -317,11 +708,7 @@ async function copyImage(dataUrl) {
     throw new Error(t("unsupportedImageCopy"));
   }
   const blob = await (await fetch(dataUrl)).blob();
-  await navigator.clipboard.write([
-    new ClipboardItem({
-      [blob.type]: blob
-    })
-  ]);
+  await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
 }
 
 async function fetchContent(item, token) {
@@ -339,64 +726,55 @@ function kindLabel(kind) {
   return t("itemKindFile");
 }
 
+// A text item usually has no title. Its own first line is a far better label
+// than the placeholder "Untitled", and the full text is one copy away.
+function itemTitle(item) {
+  if (item.title) return item.title;
+  if (item.kind === "text" && item.text) return firstLine(item.text) || t("itemUntitled");
+  return item.originalName || t("itemUntitled");
+}
+
 function renderItems(container, items, token = "") {
   if (!items.length) {
     renderEmpty(container, t("empty"));
     return;
   }
 
-  container.className = "item-list";
   container.innerHTML = "";
 
   items.forEach((item) => {
     const node = itemTemplate.content.firstElementChild.cloneNode(true);
-    node.classList.add(`kind-${item.kind}`);
-    node.querySelector(".item-kind").textContent = kindLabel(item.kind);
-    node.querySelector(".item-title").textContent = item.title || item.originalName || t("itemUntitled");
-    node.querySelector(".item-expire").textContent = t("itemExpire", { time: formatTime(item.expiresAt) });
-    node.querySelector(".item-meta").textContent = [
-      item.originalName || "",
+    node.querySelector(".row-kind").textContent = kindLabel(item.kind);
+    node.querySelector(".row-title").textContent = itemTitle(item);
+    node.querySelector(".row-expire").textContent = t("itemExpire", {
+      time: formatTime(item.expiresAt)
+    });
+    node.querySelector(".row-meta").textContent = [
       item.size ? formatSize(item.size) : "",
       t("itemCreated", { time: formatTime(item.createdAt) })
     ]
       .filter(Boolean)
       .join(" · ");
 
-    const preview = node.querySelector(".item-preview");
-    const actions = node.querySelector(".item-actions");
+    const actions = node.querySelector(".row-actions");
 
-    if (item.kind === "text" && item.text) {
-      const pre = document.createElement("pre");
-      pre.textContent = item.text.length > 220 ? `${item.text.slice(0, 220)}...` : item.text;
-      preview.appendChild(pre);
-
+    if (item.kind === "text") {
       actions.appendChild(
         createActionButton(t("copyText"), async () => {
           try {
             const content = await fetchContent(item, token);
             await copyText(content.text);
-            alert(t("copiedText"));
+            toast(t("copiedText"));
           } catch (error) {
-            alert(error.message);
+            toast(error.message);
           }
         })
       );
     }
 
     if (item.kind === "image") {
-      const img = document.createElement("img");
-      img.alt = item.title || item.originalName || "image";
-      preview.appendChild(img);
-
-      fetchContent(item, token)
-        .then((content) => {
-          img.src = content.dataUrl;
-        })
-        .catch(() => {
-          preview.textContent = t("imagePreviewFailed");
-        });
-
       const download = document.createElement("a");
+      download.className = "row-action";
       download.href = fileDownloadUrl(item, token);
       download.textContent = t("downloadImage");
       download.download = item.originalName || "image";
@@ -406,9 +784,9 @@ function renderItems(container, items, token = "") {
           try {
             const content = await fetchContent(item, token);
             await copyImage(content.dataUrl);
-            alert(t("copiedImage"));
+            toast(t("copiedImage"));
           } catch (error) {
-            alert(error.message);
+            toast(error.message);
           }
         })
       );
@@ -416,6 +794,7 @@ function renderItems(container, items, token = "") {
 
     if (item.kind === "file") {
       const download = document.createElement("a");
+      download.className = "row-action";
       download.href = fileDownloadUrl(item, token);
       download.textContent = t("downloadFile");
       download.download = item.originalName || "file";
@@ -428,161 +807,12 @@ function renderItems(container, items, token = "") {
 
 async function refreshPublicItems() {
   const res = await fetch(apiUrl("api/items/public"));
-  const data = await res.json();
-  renderItems(publicList, data.items);
+  const data = await readJSON(res);
+  if (!res.ok || !data) throw new Error(t("loadFailed"));
+  renderItems(publicList, data.items || []);
 }
 
-function bindDropzone(dropzone, handler) {
-  ["dragenter", "dragover"].forEach((eventName) => {
-    dropzone.addEventListener(eventName, (event) => {
-      event.preventDefault();
-      dropzone.classList.add("dragover");
-    });
-  });
-  ["dragleave", "drop"].forEach((eventName) => {
-    dropzone.addEventListener(eventName, (event) => {
-      event.preventDefault();
-      dropzone.classList.remove("dragover");
-    });
-  });
-  dropzone.addEventListener("drop", (event) => {
-    handler(event.dataTransfer.files);
-  });
-}
-
-function setImageFile(file) {
-  state.imageFile = file || null;
-  if (!file) {
-    imageName.textContent = t("imagePrompt");
-    imagePreview.innerHTML = "";
-    imagePreview.classList.add("hidden");
-    return;
-  }
-
-  imageName.textContent = file.name || t("clipboardImageName");
-  const url = URL.createObjectURL(file);
-  imagePreview.innerHTML = `<img src="${url}" alt="preview" />`;
-  imagePreview.classList.remove("hidden");
-}
-
-function resetTransientLabels() {
-  if (!fileInput.files[0]) {
-    fileName.textContent = t("filePrompt");
-  }
-  if (!state.imageFile) {
-    imageName.textContent = t("imagePrompt");
-  }
-}
-
-document.getElementById("kind-tabs").addEventListener("click", (event) => {
-  const tab = event.target.closest(".tab");
-  if (!tab) return;
-  switchKind(tab.dataset.kind);
-});
-
-document.getElementById("section-tabs").addEventListener("click", (event) => {
-  const tab = event.target.closest(".tab");
-  if (!tab) return;
-  switchSection(tab.dataset.section);
-});
-
-languageToggle.addEventListener("click", async () => {
-  state.language = state.language === "zh" ? "en" : "zh";
-  localStorage.setItem("temp-cloud-language", state.language);
-  applyI18n();
-  await loadConfig();
-  await refreshPublicItems();
-  setProtectedSectionVisible(false);
-  renderEmpty(protectedList, t("empty"));
-  protectedCaption.textContent = t("protectedCaptionDefault");
-  setStatus(formStatus, "");
-  setStatus(passwordStatus, "");
-  resetTransientLabels();
-});
-
-themeToggle.addEventListener("click", () => {
-  state.theme = state.theme === "light" ? "dark" : "light";
-  localStorage.setItem("temp-cloud-theme", state.theme);
-  updateTheme();
-});
-
-fileInput.addEventListener("change", () => {
-  fileName.textContent = fileInput.files[0]?.name || t("filePrompt");
-});
-
-imageInput.addEventListener("change", () => {
-  setImageFile(imageInput.files[0] || null);
-});
-
-bindDropzone(document.querySelector("#file-panel .dropzone"), (files) => {
-  const [file] = files;
-  if (!file) return;
-  const dt = new DataTransfer();
-  dt.items.add(file);
-  fileInput.files = dt.files;
-  fileName.textContent = file.name;
-});
-
-bindDropzone(document.querySelector("#image-panel .dropzone"), (files) => {
-  const [file] = Array.from(files).filter((item) => item.type.startsWith("image/"));
-  if (!file) return;
-  setImageFile(file);
-});
-
-window.addEventListener("paste", (event) => {
-  const image = Array.from(event.clipboardData?.items || []).find((item) =>
-    item.type.startsWith("image/")
-  );
-  if (!image) return;
-  event.preventDefault();
-  switchKind("image");
-  setImageFile(image.getAsFile());
-});
-
-uploadForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const formData = new FormData();
-  const raw = new FormData(uploadForm);
-  formData.set("kind", state.currentKind);
-  formData.set("title", raw.get("title") || "");
-  formData.set("password", raw.get("password") || "");
-  formData.set("expiresHours", raw.get("expiresHours") || "1");
-
-  if (state.currentKind === "text") {
-    formData.set("text", raw.get("text") || "");
-  } else if (state.currentKind === "image") {
-    if (!state.imageFile) {
-      setStatus(formStatus, t("selectImageFirst"), true);
-      return;
-    }
-    formData.set("file", state.imageFile, state.imageFile.name || "clipboard-image.png");
-  } else {
-    const file = fileInput.files[0];
-    if (!file) {
-      setStatus(formStatus, t("selectFileFirst"), true);
-      return;
-    }
-    formData.set("file", file, file.name);
-  }
-
-  setStatus(formStatus, t("saving"));
-  const res = await fetch(apiUrl("api/items"), {
-    method: "POST",
-    body: formData
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    setStatus(formStatus, data.error || uploadErrorMessage(res.status), true);
-    return;
-  }
-
-  uploadForm.reset();
-  fileName.textContent = t("filePrompt");
-  setImageFile(null);
-  setStatus(formStatus, t("saveSuccess"));
-  await refreshPublicItems();
-  switchSection("download");
-});
+/* --- password lookup ------------------------------------------------------ */
 
 passwordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -601,7 +831,7 @@ passwordForm.addEventListener("submit", async (event) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ password })
   });
-  const data = await res.json().catch(() => ({}));
+  const data = (await readJSON(res)) || {};
   if (!res.ok) {
     setProtectedSectionVisible(false);
     renderEmpty(protectedList, t("empty"));
@@ -610,7 +840,8 @@ passwordForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  if (!data.items.length) {
+  const items = Array.isArray(data.items) ? data.items : [];
+  if (!items.length) {
     setProtectedSectionVisible(false);
     renderEmpty(protectedList, t("empty"));
     protectedCaption.textContent = t("protectedCaptionDefault");
@@ -619,10 +850,12 @@ passwordForm.addEventListener("submit", async (event) => {
   }
 
   setProtectedSectionVisible(true);
-  protectedCaption.textContent = t("protectedCaptionCount", { count: data.items.length });
-  renderItems(protectedList, data.items, data.token);
-  setStatus(passwordStatus, t("lookupSuccess"));
+  protectedCaption.textContent = t("protectedCaptionCount", { count: items.length });
+  renderItems(protectedList, items, data.token);
+  setStatus(passwordStatus, t("lookupSuccess"), "ok");
 });
+
+/* --- chrome --------------------------------------------------------------- */
 
 document.getElementById("refresh-public").addEventListener("click", () => {
   refreshPublicItems().catch((error) => {
@@ -630,20 +863,42 @@ document.getElementById("refresh-public").addEventListener("click", () => {
   });
 });
 
+languageToggle.addEventListener("click", async () => {
+  state.language = state.language === "zh" ? "en" : "zh";
+  persist("temp-cloud-language", state.language);
+  applyI18n();
+  setProtectedSectionVisible(false);
+  renderEmpty(protectedList, t("empty"));
+  protectedCaption.textContent = t("protectedCaptionDefault");
+  setStatus(formStatus, "");
+  setStatus(passwordStatus, "");
+  try {
+    await loadConfig();
+    await refreshPublicItems();
+  } catch (error) {
+    renderEmpty(publicList, error.message || t("loadFailed"));
+  }
+});
+
+themeToggle.addEventListener("click", () => {
+  state.theme = state.theme === "light" ? "dark" : "light";
+  persist("temp-cloud-theme", state.theme);
+  updateTheme();
+});
+
 applyI18n();
 setProtectedSectionVisible(false);
-switchSection(state.currentSection);
+renderEmpty(protectedList, t("empty"));
 
 loadConfig()
   .then(refreshPublicItems)
   .catch((error) => {
-    setProtectedSectionVisible(false);
     renderEmpty(publicList, error.message || t("loadFailed"));
     setStatus(formStatus, t("initFailed"), true);
   });
 
 // ---------------------------------------------------------------------------
-// Privacy footer and first-launch notice (injected by tools/sync_web.py).
+// Privacy footer and first-launch notice (injected by ugos-app/src/cmd/syncweb).
 //
 // The UGREEN review rules require the privacy policy to be reachable from
 // within the application and to be surfaced on first launch. Temp Cloud
@@ -747,7 +1002,7 @@ function showPrivacyNotice() {
 
   const close = document.createElement("button");
   close.type = "button";
-  close.className = "ghost-btn";
+  close.className = "pill";
   close.textContent = strings.close;
   close.addEventListener("click", dismissPrivacyNotice);
 

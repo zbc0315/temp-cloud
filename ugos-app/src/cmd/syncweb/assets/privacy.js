@@ -1,6 +1,6 @@
 
 // ---------------------------------------------------------------------------
-// Privacy footer and first-launch notice (injected by tools/sync_web.py).
+// Privacy footer and first-launch notice (injected by ugos-app/src/cmd/syncweb).
 //
 // The UGREEN review rules require the privacy policy to be reachable from
 // within the application and to be surfaced on first launch. Temp Cloud
@@ -104,7 +104,7 @@ function showPrivacyNotice() {
 
   const close = document.createElement("button");
   close.type = "button";
-  close.className = "ghost-btn";
+  close.className = "pill";
   close.textContent = strings.close;
   close.addEventListener("click", dismissPrivacyNotice);
 

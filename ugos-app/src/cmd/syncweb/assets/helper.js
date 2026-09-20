@@ -1,5 +1,8 @@
+// `*=` rather than `$=`: the packaging step appends a content hash to the URL
+// (app.js?v=...) so an upgraded application is never served against a bundle a
+// browser cached 30 days ago, and `$=` would stop matching that suffix.
 const APP_BASE = (() => {
-  const el = document.querySelector('script[src$="app.js"]') || document.currentScript;
+  const el = document.querySelector('script[src*="app.js"]') || document.currentScript;
   if (el && el.src) return new URL("./", el.src);
   return new URL("./", document.baseURI);
 })();

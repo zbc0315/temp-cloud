@@ -1,19 +1,20 @@
 
 /* ---------------------------------------------------------------------------
-   Privacy footer and first-launch notice (injected by tools/sync_web.py).
+   Privacy footer and first-launch notice (injected by ugos-app/src/cmd/syncweb).
+   Styled entirely from the design tokens declared in public/styles.css, which
+   this file is appended to, so both themes and both breakpoints come for free.
    --------------------------------------------------------------------------- */
 .app-footer {
-  width: min(1180px, calc(100vw - 32px));
-  margin: 0 auto;
-  padding: 20px 0 40px;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 0.82rem;
-  line-height: 1.7;
+  width: min(860px, 100% - var(--sp-7));
+  padding: var(--sp-6) 0 var(--sp-7);
+  color: var(--label-2);
+  font-size: var(--fs-2);
   text-align: center;
 }
-.app-footer p { margin: 0.15rem 0; }
-.app-footer a { color: var(--accent); }
+.app-footer p { margin: var(--sp-1) 0; }
+.app-footer p:last-child { font-size: var(--fs-1); }
+/* Enough of a hit area to satisfy the 24px minimum target size. */
+.app-footer a { display: inline-block; min-height: 24px; color: var(--link); }
 
 .privacy-modal {
   position: fixed;
@@ -22,32 +23,52 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  background: rgba(20, 18, 15, 0.5);
+  padding: var(--sp-5);
+  background: rgba(20, 20, 30, 0.45);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 .privacy-modal[hidden] { display: none; }
 .privacy-modal-box {
   width: min(30rem, 100%);
-  max-height: calc(100vh - 40px);
+  max-height: calc(100vh - var(--sp-7));
   overflow-y: auto;
-  padding: 24px 26px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface-strong);
-  color: var(--text);
-  box-shadow: var(--shadow);
+  padding: var(--sp-5);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-card);
+  background: var(--glass-hi);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  color: var(--label);
+  box-shadow: var(--lift), var(--specular);
 }
-.privacy-modal-box h2 { margin: 0 0 10px; font-size: 1.1rem; }
-.privacy-modal-box p { margin: 0 0 20px; color: var(--muted); font-size: 0.92rem; line-height: 1.75; }
-.privacy-modal-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.privacy-modal-box h2 { margin: 0 0 var(--sp-3); font-size: var(--fs-4); letter-spacing: -0.022em; }
+.privacy-modal-box p {
+  margin: 0 0 var(--sp-5);
+  color: var(--label-2);
+  font-size: var(--fs-2);
+  line-height: 1.7;
+}
+.privacy-modal-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; }
+/* Opaque, so white on the accent keeps its measured 4.70:1 inside the modal. */
 .privacy-modal-actions .primary {
-  display: inline-block;
-  margin-top: 0;
-  padding: 10px 18px;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: var(--sp-2) var(--sp-5);
+  border-radius: var(--r-pill);
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: var(--fs-2);
+  font-weight: 500;
 }
-.privacy-modal-actions .primary:hover { background: var(--accent-strong); }
+.privacy-modal-actions .primary:hover { background: #0077ed; }
+/* .pill would otherwise sit on the same tint as the box it is inside. */
+.privacy-modal-actions .pill { background: var(--raised); }
+
+@media (max-width: 720px) {
+  .app-footer { width: calc(100% - var(--sp-5)); padding: var(--sp-5) 0 var(--sp-6); }
+  .privacy-modal-box { padding: var(--sp-4); border-radius: var(--r-inner); }
+}

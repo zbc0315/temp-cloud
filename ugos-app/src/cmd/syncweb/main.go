@@ -7,9 +7,11 @@
 //  1. copies the upstream frontend into src/web/,
 //  2. rewrites absolute references (/app.js, /api/...) so they resolve against
 //     the directory the application was mounted at,
-//  3. removes the Google Fonts dependency, so the UI makes no third-party
-//     request and works on a LAN with no internet access, and
-//  4. adds the privacy footer, the three lists and the first-launch notice.
+//  3. drops any Google Fonts dependency, so the UI makes no third-party
+//     request and works on a LAN with no internet access,
+//  4. adds the privacy footer, the password section caption and the
+//     first-launch notice, and
+//  5. versions the stylesheet and script URLs by content hash.
 //
 // It then asserts that neither an absolute reference nor a third-party font
 // request survives, failing otherwise.
@@ -23,7 +25,9 @@
 package main
 
 import (
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -140,14 +144,16 @@ func patchCSS(dst string) {
 	path := filepath.Join(dst, "styles.css")
 	css := readFile(path)
 
-	if !strings.Contains(css, oldFontFamily) {
-		fatalf("styles.css: Manrope font-family declaration not found")
+	// The upstream stylesheet used to pull Manrope from Google Fonts. The font
+	// stack is declared locally now, so this only rewrites a sheet that still
+	// asks for the remote face; both cases are valid, hence the guard.
+	if strings.Contains(css, oldFontFamily) {
+		css = strings.ReplaceAll(css, oldFontFamily, fontStack)
 	}
-	css = strings.ReplaceAll(css, oldFontFamily, fontStack)
 	css += asset("privacy.css")
 
 	writeFile(path, css)
-	fmt.Println("  styles.css: system font stack replaces the remote Manrope webfont; privacy styles appended")
+	fmt.Println("  styles.css: no remote webfont, system stack in place; privacy styles appended")
 }
 
 func patchJS(dst string) {
@@ -175,6 +181,46 @@ func patchJS(dst string) {
 	writeFile(path, js)
 	fmt.Printf("  app.js: %d patch sites applied, API calls resolve against APP_BASE, privacy notice appended\n",
 		len(replacements))
+}
+
+// versionAssets appends a content hash to the stylesheet and script URLs.
+//
+// UGOS's nginx maps both text/css and application/javascript to
+// "public, max-age=2592000" with no revalidation, while text/html gets
+// "no-cache,no-store". Without a version in the URL, a browser that has already
+// loaded the application keeps running the previous bundle for up to 30 days
+// after an upgrade - the new HTML would be served alongside the old script. The
+// hash changes whenever the file changes, and index.html is never cached, so
+// the two can never disagree.
+func versionAssets(dst string) {
+	appHash := contentHash(filepath.Join(dst, "app.js"))
+	cssHash := contentHash(filepath.Join(dst, "styles.css"))
+
+	path := filepath.Join(dst, "index.html")
+	html := readFile(path)
+
+	for _, ref := range []struct{ old, new string }{
+		{`src="app.js"`, `src="app.js?v=` + appHash + `"`},
+		{`href="styles.css"`, `href="styles.css?v=` + cssHash + `"`},
+	} {
+		if !strings.Contains(html, ref.old) {
+			fatalf("index.html: %s not found, so the asset URL cannot be versioned", ref.old)
+		}
+		html = strings.ReplaceAll(html, ref.old, ref.new)
+	}
+
+	writeFile(path, html)
+	fmt.Printf("  index.html: asset URLs versioned (app.js?v=%s, styles.css?v=%s)\n", appHash, cssHash)
+}
+
+// contentHash returns the first 12 hex digits of the file's SHA-256.
+func contentHash(path string) string {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		fatalf("read %s: %v", path, err)
+	}
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:])[:12]
 }
 
 // reportProblems fails the run if absolute references or third-party font
@@ -247,8 +293,9 @@ func main() {
 	}
 
 	seed(*src, *dst)
-	patchHTML(*dst)
 	patchCSS(*dst)
 	patchJS(*dst)
+	patchHTML(*dst)
+	versionAssets(*dst)
 	reportProblems(*dst)
 }
