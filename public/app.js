@@ -5,7 +5,7 @@ const messages = {
     themeToLight: "浅色",
 
     composerTitle: "粘贴、拖入，或点按添加内容",
-    composerHint: "文本 · 图片 · 文件，都放在这里",
+    composerHint: "文本 · 图片 · 文件，可以一次多个",
     composerPlaceholder: "也可以直接在这里输入或粘贴文字…",
     composerLabel: "要中转的内容",
     toolFile: "选择文件",
@@ -22,17 +22,15 @@ const messages = {
     saveSuccessProtected: "已保存，输入临时密码即可查看",
     saveFailed: "保存失败",
     emptyComposer: "请先输入文字，或添加一个文件、一张图片",
-    bothKinds: "一次只能保存一种内容：请移除附件，或清空上面的文字",
+    saveSuccessCount: "已保存 {count} 项内容",
     hourUnit: "{count} 小时",
     minuteUnit: "{count} 分钟",
     remaining: "剩余 {time}",
     expired: "已过期",
     lessThanMinute: "不到 1 分钟",
 
-    attachImage: "图片",
     attachFile: "文件",
-    attachJustNow: "刚刚添加",
-    attachRemove: "移除",
+    attachRemoveNamed: "移除 {name}",
     clipboardImageName: "剪贴板图片",
     screenshotPrefix: "屏幕截图",
     screenshotFailed: "截图失败",
@@ -83,7 +81,7 @@ const messages = {
     themeToLight: "Light",
 
     composerTitle: "Paste, drop, or tap to add",
-    composerHint: "Text, images and files all go here",
+    composerHint: "Text, images and files - as many as you like",
     composerPlaceholder: "Or just type and paste text right here…",
     composerLabel: "Content to transfer",
     toolFile: "Choose file",
@@ -100,17 +98,15 @@ const messages = {
     saveSuccessProtected: "Saved — enter the temporary password to view it",
     saveFailed: "Save failed",
     emptyComposer: "Type something, or add a file or an image first",
-    bothKinds: "One item at a time: remove the attachment, or clear the text above",
+    saveSuccessCount: "Saved {count} item(s)",
     hourUnit: "{count} hour(s)",
     minuteUnit: "{count} min",
     remaining: "{time} left",
     expired: "Expired",
     lessThanMinute: "under a minute",
 
-    attachImage: "Image",
     attachFile: "File",
-    attachJustNow: "just added",
-    attachRemove: "Remove",
+    attachRemoveNamed: "Remove {name}",
     clipboardImageName: "Clipboard image",
     screenshotPrefix: "Screenshot",
     screenshotFailed: "Screenshot failed",
@@ -180,7 +176,7 @@ function persist(key, value) {
 const state = {
   language: stored("temp-cloud-language", "zh"),
   theme: stored("temp-cloud-theme", "") || defaultTheme(),
-  attachment: null,
+  attachments: [],
   saving: false
 };
 
@@ -278,7 +274,7 @@ function applyI18n() {
     node.setAttribute("aria-label", t(node.dataset.i18nAria));
   });
   updateTheme();
-  renderAttachment();
+  renderAttachments();
 }
 
 function formatTime(value) {
@@ -325,109 +321,122 @@ async function loadConfig() {
   }
 }
 
-/* --- the composer's single attachment ------------------------------------
-   Text, an image and a file are all "content", but the backend stores exactly
-   one payload per item, so the box holds at most one attachment. Kind is
-   inferred from the file itself: no tabs, no type picker. */
+/* --- the composer's attachments ------------------------------------------
+   A submission can hold one text and any number of files, so what the box
+   collects is a list rather than a single slot. Nothing here caps the count:
+   the backend caps the whole body at 100 MB and the gateway below that, and a
+   limit invented here would only be a second place to get it wrong.
+
+   Kind is still inferred from the file itself - no tabs, no type picker. The
+   list is what makes "several files and a note, all behind one password" one
+   action instead of five. */
 
 function attachmentKind(file) {
   return (file.type || "").startsWith("image/") ? "image" : "file";
 }
 
-function setAttachment(file) {
-  clearAttachment();
-  if (!file) return;
-
-  const isImage = attachmentKind(file) === "image";
-  state.attachment = {
-    file,
-    isImage,
-    name: file.name || t("clipboardImageName"),
-    size: file.size || 0,
-    url: isImage ? URL.createObjectURL(file) : ""
-  };
-  renderAttachment();
-}
-
-function clearAttachment() {
-  if (state.attachment?.url) URL.revokeObjectURL(state.attachment.url);
-  state.attachment = null;
-  renderAttachment();
-}
-
-// Built with createElement rather than innerHTML: the file name comes from the
-// user and must never be parsed as markup.
-function renderAttachment() {
-  attachmentList.innerHTML = "";
-  const item = state.attachment;
-  if (!item) return;
-
-  const row = document.createElement("div");
-  row.className = "attached";
-
-  if (item.isImage) {
-    const thumb = document.createElement("img");
-    thumb.className = "attached-thumb";
-    thumb.src = item.url;
-    thumb.alt = "";
-    row.appendChild(thumb);
-  } else {
-    const badge = document.createElement("span");
-    badge.className = "attached-badge";
-    badge.textContent = t("attachFile");
-    row.appendChild(badge);
+function addAttachments(files) {
+  let added = 0;
+  for (const file of Array.from(files || [])) {
+    if (!file) continue;
+    const isImage = attachmentKind(file) === "image";
+    state.attachments.push({
+      file,
+      isImage,
+      name: file.name || t("clipboardImageName"),
+      size: file.size || 0,
+      url: isImage ? URL.createObjectURL(file) : ""
+    });
+    added += 1;
   }
+  if (added) renderAttachments();
+  return added;
+}
 
-  const main = document.createElement("div");
-  main.className = "attached-main";
+function removeAttachmentAt(index) {
+  const [dropped] = state.attachments.splice(index, 1);
+  if (dropped && dropped.url) URL.revokeObjectURL(dropped.url);
+  renderAttachments();
+}
 
-  const name = document.createElement("p");
-  name.className = "attached-name";
-  name.textContent = item.name;
+function clearAttachments() {
+  for (const item of state.attachments) {
+    if (item.url) URL.revokeObjectURL(item.url);
+  }
+  state.attachments = [];
+  renderAttachments();
+}
 
-  const meta = document.createElement("p");
-  meta.className = "attached-meta";
-  meta.textContent = [
-    item.isImage ? t("attachImage") : t("attachFile"),
-    formatSize(item.size),
-    t("attachJustNow")
-  ]
-    .filter(Boolean)
-    .join(" · ");
+// Built with createElement rather than innerHTML: file names come from the user
+// and must never be parsed as markup.
+function renderAttachments() {
+  attachmentList.innerHTML = "";
+  state.attachments.forEach((item, index) => {
+    const row = document.createElement("div");
+    row.className = "attached";
 
-  main.append(name, meta);
+    if (item.isImage) {
+      const thumb = document.createElement("img");
+      thumb.className = "attached-thumb";
+      thumb.src = item.url;
+      thumb.alt = "";
+      row.appendChild(thumb);
+    } else {
+      const badge = document.createElement("span");
+      badge.className = "attached-badge";
+      badge.textContent = t("attachFile");
+      row.appendChild(badge);
+    }
 
-  const remove = document.createElement("button");
-  remove.type = "button";
-  remove.className = "attached-x";
-  remove.setAttribute("aria-label", t("attachRemove"));
-  remove.innerHTML =
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
-    'stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-  remove.addEventListener("click", () => {
-    clearAttachment();
-    composerInput.focus();
+    const main = document.createElement("div");
+    main.className = "attached-main";
+
+    const name = document.createElement("p");
+    name.className = "attached-name";
+    name.textContent = item.name;
+
+    const meta = document.createElement("p");
+    meta.className = "attached-meta";
+    meta.textContent = formatSize(item.size);
+
+    main.append(name, meta);
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "attached-x";
+    remove.setAttribute(
+      "aria-label",
+      t("attachRemoveNamed", { name: item.name })
+    );
+    remove.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+      'stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    remove.addEventListener("click", () => {
+      removeAttachmentAt(index);
+      composerInput.focus();
+    });
+
+    row.append(main, remove);
+    attachmentList.appendChild(row);
   });
-
-  row.append(main, remove);
-  attachmentList.appendChild(row);
 }
 
 /* --- getting content in: paste, drop, picker, screenshot ------------------ */
 
 // Paste works anywhere on the page, not only while the textarea has focus, so
-// "copy on one device, paste here" needs no aiming.
+// "copy on one device, paste here" needs no aiming. Several pastes in a row
+// build up a list, which is how a phone's worth of screenshots gets across.
 window.addEventListener("paste", (event) => {
-  const items = Array.from(event.clipboardData?.items || []);
-  const fileItem = items.find((entry) => entry.kind === "file");
-  if (fileItem) {
-    const file = fileItem.getAsFile();
-    if (file) {
-      event.preventDefault();
-      setAttachment(file);
-      setStatus(formStatus, "");
-      return;
-    }
+  const files = Array.from(event.clipboardData?.items || [])
+    .filter((entry) => entry.kind === "file")
+    .map((entry) => entry.getAsFile())
+    .filter(Boolean);
+
+  if (files.length) {
+    event.preventDefault();
+    addAttachments(files);
+    setStatus(formStatus, "");
+    return;
   }
 
   if (event.target === composerInput) return;
@@ -438,8 +447,8 @@ window.addEventListener("paste", (event) => {
   composerInput.focus();
 });
 
-function firstFile(list) {
-  return Array.from(list || []).find((file) => file && file.size >= 0) || null;
+function filesFrom(list) {
+  return Array.from(list || []).filter((file) => file && file.size >= 0);
 }
 
 composer.addEventListener("dragenter", (event) => {
@@ -454,12 +463,12 @@ composer.addEventListener("dragleave", (event) => {
   if (composer.contains(event.relatedTarget)) return;
   composer.classList.remove("is-over");
 });
+// Every file in the drop, not just the first: a folder's worth of documents
+// should be one gesture.
 composer.addEventListener("drop", (event) => {
   event.preventDefault();
   composer.classList.remove("is-over");
-  const file = firstFile(event.dataTransfer?.files);
-  if (file) {
-    setAttachment(file);
+  if (addAttachments(filesFrom(event.dataTransfer?.files))) {
     setStatus(formStatus, "");
   }
 });
@@ -476,11 +485,9 @@ composer.addEventListener("drop", (event) => {
 pickFileButton.addEventListener("click", () => fileInput.click());
 
 fileInput.addEventListener("change", () => {
-  const file = fileInput.files?.[0];
+  const chosen = filesFrom(fileInput.files);
   fileInput.value = "";
-  if (!file) return;
-  setAttachment(file);
-  setStatus(formStatus, "");
+  if (addAttachments(chosen)) setStatus(formStatus, "");
 });
 
 function screenshotName() {
@@ -544,8 +551,9 @@ screenshotButton.addEventListener("click", async () => {
   screenshotButton.disabled = true;
   setStatus(formStatus, "");
   try {
-    const file = await captureScreen();
-    setAttachment(file);
+    // Added rather than replaced: taking a second screenshot should give you
+    // two, not overwrite the first.
+    addAttachments([await captureScreen()]);
   } catch (error) {
     const cancelled = error?.name === "NotAllowedError" || error?.name === "AbortError";
     setStatus(
@@ -560,18 +568,20 @@ screenshotButton.addEventListener("click", async () => {
 
 /* --- saving --------------------------------------------------------------- */
 
+/* --- saving ---------------------------------------------------------------
+   One submission can become several items, so the form carries a repeated
+   `file` part and an optional `text`, and the reply lists what was created.
+   The kind is not sent: the backend infers it from each file's own type, which
+   is the same rule the composer already uses to decide what to show. */
+
 async function saveComposer() {
   if (state.saving) return;
 
   const text = composerInput.value;
   const hasText = text.trim() !== "";
-  const attachment = state.attachment;
+  const attachments = state.attachments;
 
-  if (attachment && hasText) {
-    setStatus(formStatus, t("bothKinds"), true);
-    return;
-  }
-  if (!attachment && !hasText) {
+  if (!hasText && !attachments.length) {
     setStatus(formStatus, t("emptyComposer"), true);
     composerInput.focus();
     return;
@@ -581,16 +591,14 @@ async function saveComposer() {
   formData.set("title", titleInput.value);
   formData.set("password", passwordInput.value);
   formData.set("expiresHours", expiresHoursSelect.value || "1");
-
-  if (attachment) {
-    formData.set("kind", attachment.isImage ? "image" : "file");
-    formData.set("file", attachment.file, attachment.name);
-  } else {
-    formData.set("kind", "text");
-    formData.set("text", text);
+  if (hasText) formData.set("text", text);
+  for (const item of attachments) {
+    // append, not set: set would leave only the last file in the body.
+    formData.append("file", item.file, item.name);
   }
 
   const hadPassword = passwordInput.value.trim() !== "";
+  const expected = (hasText ? 1 : 0) + attachments.length;
 
   state.saving = true;
   saveButton.disabled = true;
@@ -607,12 +615,17 @@ async function saveComposer() {
       return;
     }
 
+    const created = Array.isArray(data.items) ? data.items.length : expected;
     composerInput.value = "";
     titleInput.value = "";
     passwordInput.value = "";
-    clearAttachment();
-    setStatus(formStatus, hadPassword ? t("saveSuccessProtected") : t("saveSuccess"), "ok");
-    // The item is already stored, so a failure to reload the list must not be
+    clearAttachments();
+    setStatus(
+      formStatus,
+      hadPassword ? t("saveSuccessProtected") : t("saveSuccessCount", { count: created }),
+      "ok"
+    );
+    // The items are already stored, so a failure to reload the list must not be
     // reported as a failed save.
     try {
       await refreshPublicItems();

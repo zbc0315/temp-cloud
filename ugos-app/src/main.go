@@ -216,11 +216,22 @@ func (s *store) cleanupExpired() {
 	}
 }
 
-func (s *store) add(it item) error {
+// addMany appends every item and persists once.
+//
+// One submission can produce several items, and persisting each one on its own
+// would leave a half-written batch on disk if a later write failed. Appending
+// them together and rolling the slice back on error means a batch is either all
+// there or not there.
+func (s *store) addMany(items []item) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.items = append(s.items, it)
-	return s.persist()
+	before := len(s.items)
+	s.items = append(s.items, items...)
+	if err := s.persist(); err != nil {
+		s.items = s.items[:before]
+		return err
+	}
+	return nil
 }
 
 func (s *store) findByID(id string) (item, bool) {
@@ -399,8 +410,13 @@ func resolveMimeType(declared, filename string) string {
 	return "application/octet-stream"
 }
 
-// handleCreateItem accepts a multipart form and streams the file part directly
-// to the uploads directory.
+// handleCreateItem accepts a multipart form and streams every file part
+// directly to the uploads directory.
+//
+// One submission can carry any combination of a text and several files. The
+// text becomes one item and each file becomes another, and they all share the
+// password and the retention the form asked for. That is why the reply lists
+// items rather than naming one.
 //
 // ParseMultipartForm is deliberately avoided. It spills any part larger than
 // its in-memory threshold to a temporary file, and the UGOS Pro systemd sandbox
@@ -417,16 +433,18 @@ func (s *server) handleCreateItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fields := make(map[string]string)
-	var uploaded *savedFile
+	var uploads []savedFile
 
-	// discard removes a partially written upload before reporting a failure.
-	discard := func() {
-		if uploaded != nil {
-			_ = os.Remove(filepath.Join(s.store.dir, "uploads", uploaded.storedName))
+	// discardUploads removes everything streamed so far, for the paths that fail
+	// after one or more files have already landed.
+	discardUploads := func() {
+		for _, up := range uploads {
+			_ = os.Remove(filepath.Join(s.store.dir, "uploads", up.storedName))
 		}
+		uploads = nil
 	}
 	tooLarge := func() {
-		discard()
+		discardUploads()
 		writeError(w, http.StatusRequestEntityTooLarge, "上传内容超过 100 MB 上限")
 	}
 
@@ -441,7 +459,7 @@ func (s *server) handleCreateItem(w http.ResponseWriter, r *http.Request) {
 				tooLarge()
 				return
 			}
-			discard()
+			discardUploads()
 			writeError(w, http.StatusBadRequest, "上传内容读取失败")
 			return
 		}
@@ -451,24 +469,17 @@ func (s *server) handleCreateItem(w http.ResponseWriter, r *http.Request) {
 			value, readErr := io.ReadAll(io.LimitReader(part, maxFieldBytes+1))
 			part.Close()
 			if readErr != nil {
-				discard()
+				discardUploads()
 				writeError(w, http.StatusBadRequest, "上传内容读取失败")
 				return
 			}
 			if int64(len(value)) > maxFieldBytes {
-				discard()
+				discardUploads()
 				writeError(w, http.StatusRequestEntityTooLarge, "表单字段超过 20 MB 上限")
 				return
 			}
 			fields[name] = string(value)
 			continue
-		}
-
-		if uploaded != nil {
-			part.Close()
-			discard()
-			writeError(w, http.StatusBadRequest, "一次只能上传一个文件")
-			return
 		}
 
 		original := filepath.Base(part.FileName())
@@ -485,72 +496,92 @@ func (s *server) handleCreateItem(w http.ResponseWriter, r *http.Request) {
 				tooLarge()
 				return
 			}
+			discardUploads()
 			writeError(w, http.StatusInternalServerError, "保存文件失败")
 			return
 		}
 
-		uploaded = &savedFile{
+		uploads = append(uploads, savedFile{
 			storedName:   stored,
 			originalName: original,
 			mimeType:     resolveMimeType(declared, original),
 			size:         written,
-		}
+		})
 	}
 
-	kind := strings.TrimSpace(fields["kind"])
+	text := fields["text"]
 	password := fields["password"]
 	title := strings.TrimSpace(fields["title"])
 	expiresHours := sanitizeHours(fields["expiresHours"])
 
-	now := time.Now().UTC()
-	base := item{
-		ID:        newID(),
-		Title:     title,
-		CreatedAt: now.Format(jsTimeLayout),
-		ExpiresAt: now.Add(time.Duration(expiresHours) * time.Hour).Format(jsTimeLayout),
-	}
-	if password != "" {
-		base.PasswordHash = hashPassword(password)
-	}
-
-	switch kind {
-	case "text":
-		text := fields["text"]
-		if strings.TrimSpace(text) == "" {
-			discard()
-			writeError(w, http.StatusBadRequest, "文本内容不能为空")
-			return
-		}
-		base.Kind = "text"
-		base.Text = text
-
-	case "image", "file":
-		if uploaded == nil {
-			writeError(w, http.StatusBadRequest, "请上传文件")
-			return
-		}
-		base.Kind = "file"
-		if kind == "image" || strings.HasPrefix(uploaded.mimeType, "image/") {
-			base.Kind = "image"
-		}
-		base.MimeType = uploaded.mimeType
-		base.OriginalName = uploaded.originalName
-		base.Size = uploaded.size
-		base.StoredName = uploaded.storedName
-
-	default:
-		discard()
-		writeError(w, http.StatusBadRequest, "无效的内容类型")
+	hasText := strings.TrimSpace(text) != ""
+	if !hasText && len(uploads) == 0 {
+		writeError(w, http.StatusBadRequest, "请上传文件或填写文本")
 		return
 	}
 
-	if err := s.store.add(base); err != nil {
-		discard()
+	now := time.Now().UTC()
+	createdAt := now.Format(jsTimeLayout)
+	expiresAt := now.Add(time.Duration(expiresHours) * time.Hour).Format(jsTimeLayout)
+
+	// The title names a single payload. Across several it would have to either
+	// replace every filename or be dropped, and losing three filenames to one
+	// label is worse than ignoring the label, so files keep their own names
+	// unless a file is the only thing being sent.
+	fileTitle := ""
+	if len(uploads) == 1 && !hasText {
+		fileTitle = title
+	}
+
+	batch := make([]item, 0, len(uploads)+1)
+
+	if hasText {
+		batch = append(batch, item{
+			ID:        newID(),
+			Kind:      "text",
+			Title:     title,
+			Text:      text,
+			CreatedAt: createdAt,
+			ExpiresAt: expiresAt,
+		})
+	}
+
+	for _, up := range uploads {
+		kind := "file"
+		if strings.HasPrefix(up.mimeType, "image/") {
+			kind = "image"
+		}
+		batch = append(batch, item{
+			ID:           newID(),
+			Kind:         kind,
+			Title:        fileTitle,
+			MimeType:     up.mimeType,
+			OriginalName: up.originalName,
+			Size:         up.size,
+			StoredName:   up.storedName,
+			CreatedAt:    createdAt,
+			ExpiresAt:    expiresAt,
+		})
+	}
+
+	if password != "" {
+		hash := hashPassword(password)
+		for i := range batch {
+			batch[i].PasswordHash = hash
+		}
+	}
+
+	if err := s.store.addMany(batch); err != nil {
+		discardUploads()
 		writeError(w, http.StatusInternalServerError, "保存失败")
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, map[string]any{"item": base.public()})
+	created := make([]publicItem, 0, len(batch))
+	for _, it := range batch {
+		created = append(created, it.public())
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{"items": created})
 }
 
 func (s *server) handleContent(w http.ResponseWriter, r *http.Request) {

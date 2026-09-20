@@ -209,43 +209,55 @@ body {
 .tool svg { width: 18px; height: 18px; color: var(--accent-deep); }
 .tool[disabled] { opacity: .5; cursor: default; }
 
-/* --- attached content ---------------------------------------------------- */
-.attachment-list { display: block; }
+/* --- attached content ----------------------------------------------------
+   Pills that wrap, not full-width rows. A row per file was fine when there
+   could only be one; with ten in the box it pushes the save button off the
+   column. Each pill carries the name and the size, which is what you need to
+   confirm you picked the right things, and nothing else - "just added" is
+   already obvious from having just added it. */
+.attachment-list { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.attachment-list:not(:empty) { margin-top: var(--sp-3); }
+
 .attached {
-  display: flex; align-items: center; gap: var(--sp-3);
-  margin-top: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--r-field);
+  display: flex; align-items: center; gap: var(--sp-2);
+  max-width: 100%;
+  padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-2);
+  border-radius: var(--r-pill);
   border: 1px solid var(--hairline);
   background: var(--surface);
 }
 .attached-badge {
   font-size: var(--fs-1); font-weight: 600; letter-spacing: 0.03em;
   color: var(--accent-deep); background: var(--fill);
-  border-radius: 7px; padding: var(--sp-1) var(--sp-2); white-space: nowrap;
+  border-radius: 6px; padding: var(--sp-1) var(--sp-2); white-space: nowrap;
 }
 .attached-thumb {
-  width: 40px; height: 40px; flex: none; border-radius: 8px;
+  width: 24px; height: 24px; flex: none; border-radius: 6px;
   object-fit: cover; background: var(--fill);
 }
-.attached-main { min-width: 0; flex: 1; }
+.attached-main {
+  display: flex; align-items: baseline; gap: var(--sp-1);
+  min-width: 0; max-width: 260px;
+}
 .attached-name {
-  margin: 0; font-size: var(--fs-2); font-weight: 500;
+  margin: 0; font-size: var(--fs-2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.attached-meta { margin: var(--sp-1) 0 0; font-size: var(--fs-1); color: var(--label-2); }
+.attached-meta {
+  margin: 0; font-size: var(--fs-1); color: var(--label-2); white-space: nowrap;
+}
 /* Every control states its own font and padding. Inheriting from the UA is how
    this button previously leaked `font-family: Arial` and a stray 6px padding,
    which showed up as an off-grid spacing value in the audit. */
 .attached-x {
-  width: 32px; height: 32px; flex: none; display: grid; place-items: center;
+  width: 24px; height: 24px; flex: none; display: grid; place-items: center;
   font: inherit; padding: 0;
   color: var(--label-2); background: var(--fill);
   border: 0; border-radius: 50%; cursor: pointer;
   transition: background .15s, color .15s;
 }
 .attached-x:hover { background: var(--fill-2); color: var(--label); }
-.attached-x svg { width: 15px; height: 15px; }
+.attached-x svg { width: 12px; height: 12px; }
 
 /* --- options ------------------------------------------------------------- */
 .options {
