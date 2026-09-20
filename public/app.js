@@ -1,5 +1,6 @@
 const messages = {
   zh: {
+    appName: "临时云",
     brandStatus: "到期自动清理",
     themeToDark: "深色",
     themeToLight: "浅色",
@@ -76,6 +77,7 @@ const messages = {
     unsupportedImageCopy: "当前浏览器不支持直接复制图片，请改用下载"
   },
   en: {
+    appName: "Temp Cloud",
     brandStatus: "Expires automatically",
     themeToDark: "Dark",
     themeToLight: "Light",
@@ -263,6 +265,9 @@ function updateTheme() {
 
 function applyI18n() {
   document.documentElement.lang = state.language === "zh" ? "zh-CN" : "en";
+  // The interface no longer shows the product name anywhere, so the tab and
+  // window title is the one place it appears. It follows the language.
+  document.title = t("appName");
   languageToggle.textContent = state.language === "zh" ? "EN" : "中文";
   document.querySelectorAll("[data-i18n]").forEach((node) => {
     node.textContent = t(node.dataset.i18n);
