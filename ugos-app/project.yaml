@@ -1,0 +1,71 @@
+# ---------------------------------------------------------------------------
+# Temp Cloud - UGOS Pro application configuration
+#
+# Native application: the backend is a self-contained static Go executable
+# (bin/tempcloud). No interpreter, runtime or container is required on the
+# device.
+# ---------------------------------------------------------------------------
+spec_version: "2.1"
+
+app_id: com.zbc0315.tempcloud
+version: 0.1.0
+
+support_arch:
+  - amd64
+
+product_series:
+  - nasync
+
+supports:
+  - app
+  - pc
+
+# Backend service, started from the installation directory.
+start_cmd: bin/tempcloud --port=21039
+
+# Port the backend HTTP service listens on. The system probes this port to
+# decide whether the application started successfully.
+port: 21039
+
+# Only requests under /api/ are forwarded by the system gateway to the backend;
+# the web UI itself is served from www/ by the system web server.
+proxy_path: api
+
+# Show the application icon on the system desktop and open the UI in a window.
+open_type: inner
+
+tag_types:
+  - utility
+
+depend_fw_version: 1.13.0.0000
+
+only_admin: false
+allow_add_access_path: false
+support_migration: false
+
+# Temp Cloud is built on open-source software (MIT), so the licence and the
+# corresponding source code must be disclosed.
+source_code_link:
+  - https://github.com/zbc0315/temp-cloud
+license_agreement_link:
+  - https://github.com/zbc0315/temp-cloud/blob/main/LICENSE
+technical_support_link:
+  - https://github.com/zbc0315/temp-cloud/issues
+
+i18n:
+  en-US:
+    name: Temp Cloud
+    description: Temporary file, text and image transfer over your local network. Content expires automatically after 1 to 24 hours.
+    author: zbc0315
+    official: https://github.com/zbc0315/temp-cloud
+    help: https://github.com/zbc0315/temp-cloud#readme
+    publisher: zbc0315
+    publisher_link: https://github.com/zbc0315
+  zh-CN:
+    name: Temp Cloud 临时中转
+    description: 在局域网内临时中转文件、文本和图片，支持无密码共享与临时密码访问，内容到期自动清理。
+    author: zbc0315
+    official: https://github.com/zbc0315/temp-cloud
+    help: https://github.com/zbc0315/temp-cloud#readme
+    publisher: zbc0315
+    publisher_link: https://github.com/zbc0315

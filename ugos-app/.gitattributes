@@ -1,0 +1,9 @@
+# The UGOS application is built and packed on Linux, so keep source files on LF
+# regardless of the contributor's platform.
+* text=auto eol=lf
+
+# PowerShell entry points stay CRLF for native Windows tooling.
+*.ps1 text eol=crlf
+
+# Binary assets
+*.png binary
