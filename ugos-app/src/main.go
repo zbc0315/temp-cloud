@@ -28,6 +28,7 @@ import (
 	"io/fs"
 	"log"
 	"mime"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -349,11 +350,65 @@ func (s *server) ensureAccess(r *http.Request, it item) bool {
 	return s.store.tokenMatchesPassword(bearerToken(r), it.PasswordHash)
 }
 
+// lanAddresses returns this machine's private IPv4 addresses, the most likely
+// to be reachable from another device first.
+//
+// The application is already reachable at whatever address the client used to
+// load it, but that is not always a shareable one: the desktop client may reach
+// it through the NAS's mDNS name, and .local resolution is not something every
+// machine on a LAN has. A numeric address always works.
+//
+// Docker's default bridge is dropped even though it is private and looks
+// plausible, because nothing else on the network can reach it. Among what is
+// left, 192.168.x.x sorts first: it is the usual home LAN, while a 10.x address
+// is more often a container or VPN bridge.
+func lanAddresses() []string {
+	found, err := net.InterfaceAddrs()
+	if err != nil {
+		return []string{}
+	}
+	addresses := make([]string, 0, len(found))
+	for _, entry := range found {
+		network, ok := entry.(*net.IPNet)
+		if !ok {
+			continue
+		}
+		ip := network.IP.To4()
+		if ip == nil || ip.IsLoopback() || ip.IsLinkLocalUnicast() || !ip.IsPrivate() {
+			continue
+		}
+		if ip[0] == 172 && ip[1] == 17 {
+			continue // docker0
+		}
+		addresses = append(addresses, ip.String())
+	}
+	sort.Slice(addresses, func(i, j int) bool {
+		left, right := addressRank(addresses[i]), addressRank(addresses[j])
+		if left != right {
+			return left < right
+		}
+		return addresses[i] < addresses[j]
+	})
+	return addresses
+}
+
+func addressRank(address string) int {
+	switch {
+	case strings.HasPrefix(address, "192.168."):
+		return 0
+	case strings.HasPrefix(address, "10."):
+		return 1
+	default:
+		return 2
+	}
+}
+
 func (s *server) handleConfig(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]int{
+	writeJSON(w, http.StatusOK, map[string]any{
 		"defaultExpireHours": defaultExpireHours,
 		"maxExpireHours":     maxExpireHours,
 		"maxUploadBytes":     maxUploadBytes,
+		"lanAddresses":       lanAddresses(),
 	})
 }
 

@@ -141,12 +141,61 @@ body {
 
 /* --- a surface ----------------------------------------------------------- */
 .sheet {
-  padding: var(--sp-5);
+  padding: var(--sp-4);
   border-radius: var(--r-card);
   border: 1px solid var(--hairline);
   background: var(--surface);
   box-shadow: var(--shadow);
 }
+
+/* --- the address other people open ---------------------------------------
+   A single line, kept deliberately short because every pixel it takes is a
+   pixel the two columns below do not get. The address itself is selectable as
+   well as copyable: a copy button that fails, for whatever reason, should not
+   be the only way to get the text. */
+.share-bar {
+  display: flex; align-items: center; gap: var(--sp-2);
+  flex: none;
+  padding-bottom: var(--sp-2);
+  min-width: 0;
+}
+.share-label {
+  flex: none;
+  font-size: var(--fs-1); font-weight: 600; letter-spacing: 0.04em;
+  color: var(--label-2);
+}
+.share-url {
+  /* Sized to its content rather than stretched across the bar. A pill the width
+     of the page with a short address in one corner reads as a search field;
+     `min-width: 0` and the ellipsis above let it shrink again when the address
+     really is long. */
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--fs-2);
+  color: var(--label);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  /* Selectable, and the ellipsis above still tells the truth about the text. */
+  user-select: all;
+}
+.share-url:empty { display: none; }
+.share-copy {
+  flex: none;
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  min-height: 32px;
+  padding: var(--sp-1) var(--sp-3);
+  font: inherit; font-size: var(--fs-2); font-weight: 500;
+  color: var(--accent-deep); background: var(--fill);
+  border: 0; border-radius: var(--r-pill); cursor: pointer;
+  transition: background .15s;
+}
+.share-copy:hover { background: var(--fill-2); }
+.share-copy svg { width: 15px; height: 15px; }
+.share-copy[disabled] { opacity: .5; cursor: default; }
 
 /* --- THE composer --------------------------------------------------------
    One box for text, images and files. The dashed edge is the affordance: it

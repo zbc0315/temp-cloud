@@ -72,6 +72,11 @@ const messages = {
 
     copyText: "复制",
     copyImage: "复制",
+    // Was referenced on the copy-failure path from the start but never defined,
+    // and `t()` falls back to the key itself - so a failure printed "copyFailed".
+    copyFailed: "复制失败",
+    shareLabel: "局域网地址",
+    shareCopied: "局域网地址已复制",
     downloadFile: "下载",
     downloadImage: "下载",
     copiedText: "已复制到剪贴板",
@@ -152,6 +157,9 @@ const messages = {
 
     copyText: "Copy",
     copyImage: "Copy",
+    copyFailed: "Copy failed",
+    shareLabel: "LAN address",
+    shareCopied: "LAN address copied",
     downloadFile: "Download",
     downloadImage: "Download",
     copiedText: "Copied to clipboard",
@@ -213,10 +221,13 @@ const state = {
   language: stored("temp-cloud-language", "zh"),
   theme: stored("temp-cloud-theme", "") || defaultTheme(),
   attachments: [],
+  lanAddresses: [],
   saving: false
 };
 
 const composer = document.getElementById("composer");
+const shareUrl = document.getElementById("share-url");
+const shareCopy = document.getElementById("share-copy");
 const composerInput = document.getElementById("composer-input");
 const attachmentList = document.getElementById("attachment-list");
 const fileInput = document.getElementById("file-input");
@@ -344,10 +355,48 @@ function fileDownloadUrl(item, token) {
   return url.toString();
 }
 
+// The address to hand to someone else on the network.
+//
+// The page already knows it in most cases: whatever host loaded it works. The
+// exception is when that host is not useful to anyone else - localhost, or the
+// NAS's mDNS name, which not every machine on a LAN can resolve. The backend
+// supplies the machine's own private addresses for exactly that case, and they
+// are the same addresses this page was almost certainly loaded through.
+function shareAddress() {
+  const host = window.location.hostname;
+  const port = window.location.port ? `:${window.location.port}` : "";
+  const scheme = window.location.protocol === "https:" ? "https:" : "http:";
+  const usable = (value) =>
+    Boolean(value) && value !== "localhost" && value !== "127.0.0.1" && value !== "::1" && !value.endsWith(".local");
+
+  if (usable(host)) return `${scheme}//${host}${port}/`;
+  const fallback = state.lanAddresses[0];
+  if (fallback) return `http://${fallback}${port}/`;
+  return `${window.location.origin}/`;
+}
+
+function renderShareBar() {
+  const address = shareAddress();
+  if (shareUrl.textContent !== address) shareUrl.textContent = address;
+}
+
+async function copyShareAddress() {
+  const address = shareUrl.textContent;
+  if (!address) return;
+  try {
+    await copyText(address);
+    toast(t("shareCopied"));
+  } catch (error) {
+    toast(t("copyFailed"));
+  }
+}
+
 async function loadConfig() {
   const res = await fetch(apiUrl("api/config"));
   const data = await readJSON(res);
   if (!res.ok || !data) throw new Error(t("initFailed"));
+  state.lanAddresses = Array.isArray(data.lanAddresses) ? data.lanAddresses : [];
+  renderShareBar();
   const previous = expiresHoursSelect.value;
   expiresHoursSelect.innerHTML = "";
   for (let i = 1; i <= data.maxExpireHours; i += 1) {
@@ -1157,9 +1206,14 @@ themeToggle.addEventListener("click", () => {
   updateTheme();
 });
 
+shareCopy.addEventListener("click", copyShareAddress);
+
 applyI18n();
 setProtectedSectionVisible(false);
 renderEmpty(protectedList, t("empty"));
+// Shown before the backend answers, because the page usually already knows a
+// usable address. loadConfig re-renders it if the backend has a better one.
+renderShareBar();
 
 // Every card states how much of its life is left, so the page keeps those
 // numbers and bars honest for as long as it stays open.
