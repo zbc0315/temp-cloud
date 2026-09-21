@@ -62,16 +62,16 @@ i18n:
   en-US:
     name: Temp Cloud
     description: Temporary file, text and image transfer over your local network. Upload several at once; content expires automatically after 1 to 24 hours.
-    author: zbc0315
+    author: Zhang Baicheng
     official: https://github.com/zbc0315/temp-cloud
     help: https://github.com/zbc0315/temp-cloud#readme
-    publisher: zbc0315
+    publisher: Zhang Baicheng
     publisher_link: https://github.com/zbc0315
   zh-CN:
     name: 临时云
     description: 在局域网内临时中转文件、文本和图片，支持一次上传多个文件、无密码共享与临时密码访问，内容到期自动清理。
-    author: zbc0315
+    author: 张百成
     official: https://github.com/zbc0315/temp-cloud
     help: https://github.com/zbc0315/temp-cloud#readme
-    publisher: zbc0315
+    publisher: 张百成
     publisher_link: https://github.com/zbc0315
