@@ -171,6 +171,10 @@ body {
   padding: var(--sp-4) var(--sp-4) var(--sp-3);
   text-align: center;
 }
+/* Once anything is in the box, the instruction above it has been followed.
+   Repeating it only takes height away from the list of what was added, and the
+   dashed edge - which is the actual drop affordance - stays either way. */
+.sheet.has-content .composer-empty { display: none; }
 .composer-glyph { width: 30px; height: 30px; margin-bottom: var(--sp-1); color: var(--accent-deep); }
 .composer-title { margin: 0; font-size: var(--fs-4); font-weight: 600; letter-spacing: -0.024em; }
 .composer-hint { margin: 0; font-size: var(--fs-2); color: var(--label-2); }
@@ -626,6 +630,24 @@ body[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
     scrollbar-gutter: stable;
   }
   .toggles { flex: none; margin-top: var(--sp-5); }
+
+  /* The card fills its column and the attachment list takes whatever height is
+     left over. Without that, adding several files pushes the options and the
+     save button below the bottom of the column and they have to be scrolled
+     to - and a save button nobody can find is a form nobody completes. Here
+     the list is the only thing that gives, so those two never move. */
+  .column-upload { display: flex; flex-direction: column; }
+  .sheet { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .composer,
+  .options,
+  .sheet > .save,
+  .sheet > .status { flex: none; }
+  .attachment-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    align-content: flex-start;    /* wrapped chips start at the top, not centred */
+  }
 }
 
 /* --- mobile -------------------------------------------------------------- */

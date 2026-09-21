@@ -380,7 +380,17 @@ function clearAttachments() {
 
 // Built with createElement rather than innerHTML: file names come from the user
 // and must never be parsed as markup.
+// Whether the composer has anything in it yet. Used only to decide whether the
+// instruction above it is still worth its height.
+function updateComposerState() {
+  const sheet = composer.closest(".sheet");
+  if (!sheet) return;
+  const hasContent = state.attachments.length > 0 || composerInput.value.trim() !== "";
+  sheet.classList.toggle("has-content", hasContent);
+}
+
 function renderAttachments() {
+  updateComposerState();
   attachmentList.innerHTML = "";
   state.attachments.forEach((item, index) => {
     const row = document.createElement("div");
@@ -699,6 +709,8 @@ composerInput.addEventListener("keydown", (event) => {
     saveComposer();
   }
 });
+
+composerInput.addEventListener("input", updateComposerState);
 
 /* --- reading -------------------------------------------------------------- */
 
