@@ -40,6 +40,8 @@ const messages = {
       "浏览器不允许 HTTP 页面截屏。改用 HTTPS 入口访问即可直接截图；或按 Win+Shift+S 截图后在这里按 Ctrl+V 粘贴。",
     screenshotHintEmbedded:
       "当前窗口内无法直接截屏。按 Win+Shift+S 截图后在这里按 Ctrl+V 粘贴即可。",
+    screenshotNotSupported:
+      "当前客户端未启用屏幕捕获。按 Win+Shift+S 截图后在这里按 Ctrl+V 粘贴即可。",
 
     protectedSectionTitle: "密码内容",
     protectedCaptionDefault: "输入密码后显示",
@@ -118,6 +120,8 @@ const messages = {
       "A browser will not let an HTTP page capture the screen. Open the app over HTTPS to use this button, or press Win+Shift+S and paste here with Ctrl+V.",
     screenshotHintEmbedded:
       "This window cannot capture the screen. Press Win+Shift+S, then paste here with Ctrl+V.",
+    screenshotNotSupported:
+      "This client does not enable screen capture. Press Win+Shift+S, then paste here with Ctrl+V.",
 
     protectedSectionTitle: "Protected content",
     protectedCaptionDefault: "Shown after password lookup",
@@ -618,12 +622,25 @@ screenshotButton.addEventListener("click", async () => {
     // two, not overwrite the first.
     addAttachments([await captureScreen()]);
   } catch (error) {
-    const cancelled = error?.name === "NotAllowedError" || error?.name === "AbortError";
-    setStatus(
-      formStatus,
-      cancelled ? t("screenshotCancelled") : error.message || t("screenshotFailed"),
-      !cancelled
-    );
+    const name = error?.name || "";
+    const cancelled = name === "NotAllowedError" || name === "AbortError";
+    let message = t("screenshotFailed");
+    if (cancelled) {
+      message = t("screenshotCancelled");
+    } else if (name === "NotSupportedError") {
+      // What Electron raises when the host has not registered a display-media
+      // handler. The frame is granted display-capture by then - the manifest
+      // in www/version.json sees to that - but the client itself still has to
+      // accept the request.
+      //
+      // The browser's own text for this is a bare "Not supported". Passing
+      // that through put an unexplained English fragment in the middle of a
+      // Chinese interface, which is how this was reported back.
+      message = t("screenshotNotSupported");
+    }
+    // Keep the raw error available for diagnosis without putting it on screen.
+    if (!cancelled) console.warn("screen capture failed:", error);
+    setStatus(formStatus, message, !cancelled);
   } finally {
     screenshotButton.disabled = false;
   }
