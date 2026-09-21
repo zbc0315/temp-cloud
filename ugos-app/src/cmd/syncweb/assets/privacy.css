@@ -4,8 +4,11 @@
    Styled entirely from the tokens in public/styles.css, which this file is
    appended to, so both themes and both breakpoints come for free.
    --------------------------------------------------------------------------- */
+/* Matches .app in styles.css. It was left at the old 900px when the page was
+   widened, which put the small print on a narrower column than the content
+   above it. */
 .app-footer {
-  width: min(900px, 100% - var(--sp-7));
+  width: min(1180px, 100% - var(--sp-6));
   padding: var(--sp-6) 0 var(--sp-7);
   color: var(--label-2);
   font-size: var(--fs-2);
@@ -15,6 +18,12 @@
 .app-footer p:last-child { font-size: var(--fs-1); }
 /* Enough of a hit area to satisfy the 24px minimum target size. */
 .app-footer a { display: inline-block; min-height: 24px; color: var(--link); }
+
+/* In a window the footer is height the content does not get, and it is small
+   print - it can afford to sit closer to the content and to the edge. */
+@media (min-width: 861px) {
+  .app-footer { padding: var(--sp-4) 0 var(--sp-5); }
+}
 
 .privacy-modal {
   position: fixed;

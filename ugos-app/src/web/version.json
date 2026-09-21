@@ -6,6 +6,10 @@
   "supportLanguages": ["en-US", "zh-CN"],
 
   "windowConfig": {
+    "width": 1200,
+    "height": 800,
+    "minWidth": 880,
+    "minHeight": 600,
     "allow": ["display-capture", "clipboard-write"]
   },
 
